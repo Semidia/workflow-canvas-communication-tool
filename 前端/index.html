@@ -122,6 +122,14 @@
               </select>
             </div>
           </div>
+          <div class="field-group condition-group" id="conditionGroup" hidden>
+            <label for="inspectorCondition">判断条件</label>
+            <input id="inspectorCondition" name="condition" type="text" maxlength="80" autocomplete="off" placeholder="例如：材料是否齐全？">
+          </div>
+          <div class="field-group condition-group" id="exitConditionGroup" hidden>
+            <label for="inspectorExitCondition">退出循环条件</label>
+            <input id="inspectorExitCondition" name="exitCondition" type="text" maxlength="80" autocomplete="off" placeholder="例如：材料齐全，或已核对 3 轮">
+          </div>
           <div class="relation-group">
             <div class="relation-heading"><span>前置节点</span><span class="relation-count" id="previousCount">0</span></div>
             <div class="relation-list" id="previousNodes"></div>
@@ -133,11 +141,25 @@
           <p class="inspector-footnote">讨论标记只服务于人与 AI 的沟通，不代表系统执行状态。</p>
         </form>
         <form class="inspector-form" id="inspectorEdgeForm" hidden>
+          <div class="branch-group" id="branchGroup" hidden>
+            <span class="branch-hint">分支标签</span>
+            <div class="branch-buttons">
+              <button type="button" class="branch-button" data-branch="是">是</button>
+              <button type="button" class="branch-button" data-branch="否">否</button>
+              <button type="button" class="branch-button" data-branch="未定">未定</button>
+            </div>
+          </div>
           <div class="field-group">
-            <label for="inspectorEdgeName">连线名称</label>
+            <label for="inspectorEdgeName" id="edgeNameLabel">连线名称</label>
             <input id="inspectorEdgeName" name="edgeLabel" type="text" maxlength="80" autocomplete="off" placeholder="例如：审批、依赖、下一步">
           </div>
-          <p class="inspector-footnote">连线名称用于标注这条连线代表的关系，不会改变连线方向。留空则不显示名称。</p>
+          <div class="field-group field-checkbox">
+            <label class="checkbox-label">
+              <input id="inspectorEdgeLoop" name="loop" type="checkbox">
+              <span>循环回边（虚线显示）</span>
+            </label>
+          </div>
+          <p class="inspector-footnote">分支标签（是 / 否 / 未定）与连线名称相互独立，分别显示在连线旁；留空则不显示。循环回边为手动标记，仅以虚线提示，不参与自动执行。</p>
         </form>
       </aside>
     </div>
@@ -147,9 +169,9 @@
       <div class="status-group status-selection"><span class="status-label">选择</span><span id="selectionStatus">未选择节点</span></div>
       <div class="status-group zoom-controls" aria-label="缩放控制">
         <span class="status-label">缩放</span>
-        <button class="zoom-button" data-action="zoom-out" title="缩小">−</button>
-        <button class="zoom-value" id="zoomValue" data-action="zoom-reset" title="恢复 100%">100%</button>
-        <button class="zoom-button" data-action="zoom-in" title="放大">＋</button>
+        <button class="zoom-button" data-action="zoom-out" title="缩小" aria-label="缩小">−</button>
+        <button class="zoom-value" id="zoomValue" data-action="zoom-reset" title="恢复 100%" aria-label="恢复 100%">100%</button>
+        <button class="zoom-button" data-action="zoom-in" title="放大" aria-label="放大">＋</button>
       </div>
     </footer>
   </div>
