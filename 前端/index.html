@@ -68,7 +68,7 @@
         <div class="palette-help">空白处拖动可移动画布<br>双击节点可编辑文字</div>
       </aside>
 
-      <main class="canvas-viewport" id="viewport" tabindex="0" aria-label="工作流画布">
+      <main class="canvas-viewport" id="viewport" aria-label="工作流画布">
         <div class="canvas-surface" id="surface">
           <svg class="edge-layer" id="edgeLayer" viewBox="0 0 2400 1500" aria-hidden="true">
             <defs>
@@ -131,6 +131,13 @@
             <div class="relation-list" id="nextNodes"></div>
           </div>
           <p class="inspector-footnote">讨论标记只服务于人与 AI 的沟通，不代表系统执行状态。</p>
+        </form>
+        <form class="inspector-form" id="inspectorEdgeForm" hidden>
+          <div class="field-group">
+            <label for="inspectorEdgeName">连线名称</label>
+            <input id="inspectorEdgeName" name="edgeLabel" type="text" maxlength="80" autocomplete="off" placeholder="例如：审批、依赖、下一步">
+          </div>
+          <p class="inspector-footnote">连线名称用于标注这条连线代表的关系，不会改变连线方向。留空则不显示名称。</p>
         </form>
       </aside>
     </div>
