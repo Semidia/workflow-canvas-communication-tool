@@ -110,6 +110,18 @@ try {
   check("切换分支不清空连线名称", e1AfterWeiding?.label === "审批通过", `label="${e1AfterWeiding?.label}"`);
   await snap(page, "branch-tristate");
 
+  // 2b. 重复点击同一分支按钮应幂等：不产生多余历史，undo 一次回到上一分支
+  await page.locator('.branch-button[data-branch="是"]').click();
+  await page.waitForTimeout(80);
+  await page.locator('.branch-button[data-branch="是"]').click();
+  await page.waitForTimeout(80);
+  check("重复点「是」后 branch 仍为是", (await edge("e1"))?.branch === "是", `branch="${(await edge("e1"))?.branch}"`);
+  await page.keyboard.press("Control+z");
+  await page.waitForTimeout(180);
+  check("幂等：undo 一次回到上一分支「未定」", (await edge("e1"))?.branch === "未定", `branch="${(await edge("e1"))?.branch}"`);
+  await page.mouse.click(mid.x, mid.y);
+  await page.waitForTimeout(80);
+
   // 3. 循环回边虚线
   await page.locator("#inspectorEdgeLoop").check();
   await page.waitForTimeout(150);
