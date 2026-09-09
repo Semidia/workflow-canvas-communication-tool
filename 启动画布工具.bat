@@ -4,6 +4,7 @@ setlocal
 set "PWSH=C:\Program Files\PowerShell\7\pwsh.exe"
 if not exist "%PWSH%" (
   echo 未找到 PowerShell 7，请先安装后再启动画布。
+  echo 可执行安装：winget install --id Microsoft.PowerShell
   pause
   exit /b 1
 )

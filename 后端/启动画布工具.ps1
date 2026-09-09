@@ -38,8 +38,8 @@ function Test-CanvasPage {
     $response = Invoke-WebRequest -Uri $candidateUrl -UseBasicParsing -TimeoutSec 2
     $content = [string]$response.Content
     return $response.StatusCode -eq 200 -and
-      $content.Contains("<title>设计沟通画布｜本地编辑</title>") -and
-      $content.Contains('src="app.js"')
+      $content.Contains("设计沟通画布") -and
+      $content.Contains('app.js')
   } catch {
     return $false
   }
