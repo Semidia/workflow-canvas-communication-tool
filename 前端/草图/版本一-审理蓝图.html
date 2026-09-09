@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>版本一｜审理蓝图</title>
+  <style>
+    :root { --ink:#15263a; --muted:#607287; --line:#c8d5df; --paper:#eef3f5; --card:#ffffff; --coral:#ef6c55; --teal:#237f7c; --yellow:#f4c95d; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:"Aptos","Microsoft YaHei",sans-serif; background:var(--paper); }
+    .shell { min-height:100vh; display:grid; grid-template-rows:76px 1fr; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:0 28px; background:#fbfcfc; border-bottom:1px solid var(--line); }
+    .brand { display:flex; gap:14px; align-items:center; }
+    .mark { width:34px; height:34px; display:grid; place-items:center; color:white; background:var(--ink); font-weight:800; border-radius:9px; }
+    h1 { font:700 17px/1.1 Georgia,serif; margin:0; letter-spacing:.02em; }
+    .sub { color:var(--muted); font-size:12px; margin-top:5px; }
+    .tools { display:flex; gap:8px; }
+    button { border:1px solid var(--line); background:white; color:var(--ink); padding:9px 12px; border-radius:7px; font:600 12px inherit; }
+    .accent { color:white; background:var(--teal); border-color:var(--teal); }
+    main { display:grid; grid-template-columns:220px 1fr 272px; min-height:0; }
+    aside { padding:22px 18px; background:#f8fafb; border-right:1px solid var(--line); }
+    aside.right { border-right:0; border-left:1px solid var(--line); background:#fbfcfc; }
+    .kicker { font-size:10px; letter-spacing:.14em; font-weight:800; color:var(--coral); text-transform:uppercase; }
+    .rail-title { margin:8px 0 18px; font:700 18px Georgia,serif; }
+    .item { padding:10px 11px; border:1px solid transparent; margin-bottom:7px; font-size:12px; color:var(--muted); }
+    .item.active { color:var(--ink); background:white; border-color:var(--line); box-shadow:0 4px 12px #15263a0d; }
+    .canvas { position:relative; overflow:hidden; background-color:#e8eff2; background-image:linear-gradient(#d5e0e6 1px,transparent 1px),linear-gradient(90deg,#d5e0e6 1px,transparent 1px); background-size:28px 28px; }
+    .canvas:before { content:"WORKFLOW / 01"; position:absolute; top:25px; left:28px; color:#7b8e9c; font:700 10px/1 monospace; letter-spacing:.17em; }
+    svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+    .wire { fill:none; stroke:#6e8493; stroke-width:2; stroke-dasharray:5 5; }
+    .node { position:absolute; width:164px; padding:15px; background:var(--card); border:1px solid var(--line); border-top:4px solid var(--teal); border-radius:9px; box-shadow:0 10px 22px #15263a17; }
+    .node strong { display:block; font:700 14px Georgia,serif; }
+    .node small { display:block; margin-top:7px; color:var(--muted); font-size:11px; line-height:1.45; }
+    .node.coral { border-top-color:var(--coral); }
+    .node.yellow { border-top-color:var(--yellow); }
+    .n1 { left:10%; top:24%; } .n2 { left:39%; top:43%; } .n3 { left:68%; top:25%; } .n4 { left:67%; top:67%; }
+    .note { margin-top:24px; padding:14px; border-left:3px solid var(--coral); background:#fff8f2; color:#6e5148; font-size:12px; line-height:1.6; }
+    .detail { margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
+    .detail strong { font:700 16px Georgia,serif; }
+    .tag { display:inline-block; margin-top:12px; padding:5px 7px; color:#276c69; background:#dcefed; font-size:10px; font-weight:800; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div class="brand"><div class="mark">审</div><div><h1>课堂复盘工作流</h1><div class="sub">审理蓝图 · 稳定、清晰、可追溯</div></div></div><div class="tools"><button>撤销</button><button>导出</button><button class="accent">保存画布</button></div></header>
+    <main>
+      <aside><div class="kicker">Structure</div><div class="rail-title">流程骨架</div><div class="item active">课堂 AI 复盘</div><div class="item">证据链核对</div><div class="item">教师确认</div><div class="item">发布复盘稿</div><div class="note">用清楚的来源和状态，把复杂课堂流程画成一张可回放的图。</div></aside>
+      <section class="canvas">
+        <svg viewBox="0 0 800 620" preserveAspectRatio="none"><path class="wire" d="M210 214 C285 214 300 300 365 300"/><path class="wire" d="M520 300 C595 300 595 210 640 210"/><path class="wire" d="M520 330 C600 350 610 430 640 450"/></svg>
+        <div class="node n1"><strong>选择范围</strong><small>当前课堂 · 正式来源</small></div>
+        <div class="node n2 coral"><strong>AI 生成分析</strong><small>主张、来源、待核对项</small></div>
+        <div class="node n3 yellow"><strong>教师追问</strong><small>继续分析 · 保留历史轮次</small></div>
+        <div class="node n4"><strong>确认发布</strong><small>复盘稿 · 发送稿</small></div>
+      </section>
+      <aside class="right"><div class="kicker">Inspector</div><div class="rail-title">当前节点</div><div class="detail"><strong>AI 生成分析</strong><div class="tag">需要来源校验</div><p class="sub" style="margin-top:16px;line-height:1.7">模型只能读取已确认的课堂快照。每条分析意见都要连接到来源编号。</p></div></aside>
+    </main>
+  </div>
+</body>
+</html>

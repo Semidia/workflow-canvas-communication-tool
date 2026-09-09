@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="本地工作流画布编辑器">
+  <title>设计沟通画布｜本地编辑</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">流</div>
+        <div>
+          <div class="brand-title">设计沟通画布</div>
+          <div class="brand-caption">通用设计工具 · 本地编辑</div>
+        </div>
+      </div>
+      <div class="topbar-groups">
+        <section class="topbar-group canvas-group" aria-labelledby="canvas-group-title">
+          <h2 class="topbar-group-title" id="canvas-group-title">画布</h2>
+          <div class="canvas-tabs" id="canvasTabs" aria-label="画布标签页"></div>
+        </section>
+        <section class="topbar-group" aria-labelledby="edit-group-title">
+          <h2 class="topbar-group-title" id="edit-group-title">编辑</h2>
+          <div class="topbar-controls">
+            <button class="icon-button" data-action="undo" title="撤销（Ctrl+Z）" aria-label="撤销">↶</button>
+            <button class="icon-button" data-action="redo" title="重做（Ctrl+Y）" aria-label="重做">↷</button>
+          </div>
+        </section>
+        <section class="topbar-group" aria-labelledby="file-group-title">
+          <h2 class="topbar-group-title" id="file-group-title">文件</h2>
+          <div class="topbar-controls">
+            <label class="file-button" title="导入工作流 JSON">
+              <span aria-hidden="true">↥</span> 导入
+              <input id="importInput" type="file" accept="application/json,.json" hidden>
+            </label>
+            <button class="text-button" data-action="export" title="导出工作流 JSON">导出</button>
+            <button class="primary-button" data-action="save" title="保存到本机浏览器">保存</button>
+          </div>
+        </section>
+      </div>
+    </header>
+
+    <div class="workspace-shell">
+      <aside class="tool-palette" aria-label="画布工具栏">
+        <div class="palette-heading">工具</div>
+        <section class="palette-section" aria-labelledby="palette-actions-title">
+          <h2 class="palette-section-title" id="palette-actions-title">操作</h2>
+          <div class="tool-group">
+            <button class="tool-button is-active" data-tool="select" title="选择和移动（V）" aria-label="选择和移动"><span>↖</span><small>选择</small></button>
+            <button class="tool-button" data-tool="text" title="在画布上添加文字（T）" aria-label="添加文字"><span>T</span><small>文字</small></button>
+            <button class="tool-button" data-tool="connector" title="拖动端点或点击两个节点连线" aria-label="连接节点"><span>⌁</span><small>连线</small></button>
+          </div>
+        </section>
+        <section class="palette-section" aria-labelledby="palette-nodes-title">
+          <h2 class="palette-section-title" id="palette-nodes-title">节点</h2>
+          <div class="tool-group">
+            <button class="tool-button" data-tool="rect" title="步骤节点（矩形）" aria-label="步骤节点"><span>□</span><small>步骤</small></button>
+            <button class="tool-button" data-tool="diamond" title="判断节点" aria-label="判断节点"><span>◇</span><small>判断</small></button>
+            <button class="tool-button" data-tool="circle" title="开始或结束节点（圆形）" aria-label="开始或结束节点"><span>○</span><small>开始/结束</small></button>
+            <button class="tool-button" data-tool="document" title="材料节点（文档形）" aria-label="材料节点"><span>▱</span><small>材料</small></button>
+            <button class="tool-button" data-tool="triangle" title="提醒节点（三角形）" aria-label="提醒节点"><span>△</span><small>提醒</small></button>
+          </div>
+        </section>
+        <div class="palette-help">空白处拖动可移动画布<br>双击节点可编辑文字</div>
+      </aside>
+
+      <main class="canvas-viewport" id="viewport" tabindex="0" aria-label="工作流画布">
+        <div class="canvas-surface" id="surface">
+          <svg class="edge-layer" id="edgeLayer" viewBox="0 0 2400 1500" aria-hidden="true">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L8,4 L0,8 z" fill="#4a7c8b"></path>
+              </marker>
+            </defs>
+            <g id="edges"></g>
+            <path id="temporaryEdge" class="temporary-edge" d="" hidden></path>
+          </svg>
+          <div class="node-layer" id="nodeLayer"></div>
+          <div class="canvas-watermark">WORKFLOW / LOCAL DRAFT</div>
+        </div>
+        <div class="canvas-empty" id="canvasEmpty" hidden>选择左侧工具，在画布空白处放置节点</div>
+        <div class="selection-hint" id="selectionHint" hidden></div>
+      </main>
+
+      <aside class="node-inspector" id="nodeInspector" aria-label="节点信息">
+        <div class="inspector-header">
+          <div>
+            <p class="eyebrow">当前选择</p>
+            <h2>节点信息</h2>
+          </div>
+          <span class="inspector-count" id="inspectorCount">未选择</span>
+        </div>
+        <div class="inspector-empty" id="inspectorEmpty">
+          <span class="inspector-empty-mark" aria-hidden="true">＋</span>
+          <p>选择一个节点后，在这里补充说明和讨论标记。</p>
+        </div>
+        <form class="inspector-form" id="inspectorForm" hidden>
+          <div class="field-group">
+            <label for="inspectorName">名称</label>
+            <input id="inspectorName" name="label" type="text" maxlength="80" autocomplete="off">
+          </div>
+          <div class="field-group">
+            <label for="inspectorNote">说明</label>
+            <textarea id="inspectorNote" name="note" rows="4" maxlength="240"></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field-group field-half">
+              <label for="inspectorType">类型</label>
+              <input id="inspectorType" type="text" readonly aria-readonly="true">
+            </div>
+            <div class="field-group field-half">
+              <label for="inspectorMarker">讨论标记</label>
+              <select id="inspectorMarker" name="marker">
+                <option value="待讨论">待讨论</option>
+                <option value="已决定">已决定</option>
+                <option value="有疑问">有疑问</option>
+                <option value="不采用">不采用</option>
+              </select>
+            </div>
+          </div>
+          <div class="relation-group">
+            <div class="relation-heading"><span>前置节点</span><span class="relation-count" id="previousCount">0</span></div>
+            <div class="relation-list" id="previousNodes"></div>
+          </div>
+          <div class="relation-group">
+            <div class="relation-heading"><span>后续节点</span><span class="relation-count" id="nextCount">0</span></div>
+            <div class="relation-list" id="nextNodes"></div>
+          </div>
+          <p class="inspector-footnote">讨论标记只服务于人与 AI 的沟通，不代表系统执行状态。</p>
+        </form>
+      </aside>
+    </div>
+
+    <footer class="statusbar">
+      <div class="status-group status-save"><span class="status-dot" id="statusDot"></span><span class="status-label">保存</span><span id="saveStatus">尚未保存</span></div>
+      <div class="status-group status-selection"><span class="status-label">选择</span><span id="selectionStatus">未选择节点</span></div>
+      <div class="status-group zoom-controls" aria-label="缩放控制">
+        <span class="status-label">缩放</span>
+        <button class="zoom-button" data-action="zoom-out" title="缩小">−</button>
+        <button class="zoom-value" id="zoomValue" data-action="zoom-reset" title="恢复 100%">100%</button>
+        <button class="zoom-button" data-action="zoom-in" title="放大">＋</button>
+      </div>
+    </footer>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

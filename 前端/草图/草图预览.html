@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工作流画布视觉草图预览</title>
+  <style>
+    * { box-sizing:border-box; } body { margin:0; background:#e9edf0; color:#1d2b35; font-family:"Microsoft YaHei",sans-serif; } header { padding:28px 34px 22px; background:#f9fafb; border-bottom:1px solid #d6dde2; } h1 { margin:0; font:700 25px Georgia,serif; } p { margin:9px 0 0; color:#667580; font-size:13px; } main { padding:25px 34px 36px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; } article { background:white; border:1px solid #d6dde2; box-shadow:0 13px 30px #1d2b3514; } .meta { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; } .meta strong { font:700 15px Georgia,serif; } .meta span { color:#71808a; font-size:11px; } iframe { display:block; width:100%; height:540px; border:0; border-top:1px solid #e0e5e8; } .hint { padding:0 34px 28px; color:#667580; font-size:12px; } @media (max-width:1050px) { main { grid-template-columns:1fr; } iframe { height:460px; } }
+  </style>
+</head>
+<body>
+  <header><h1>工作流画布 / 三个视觉方向</h1><p>先选气质，再制作正式编辑器。三个版本都保留“节点、连线、右侧详情”的基本骨架。</p></header>
+  <main>
+    <article><div class="meta"><strong>版本一 · 审理蓝图</strong><span>稳重 / 清晰</span></div><iframe title="版本一审理蓝图" src="版本一-审理蓝图.html"></iframe></article>
+    <article><div class="meta"><strong>版本二 · 证据索引</strong><span>纸张 / 条理</span></div><iframe title="版本二证据索引" src="版本二-证据索引.html"></iframe></article>
+    <article><div class="meta"><strong>版本三 · 信号流</strong><span>深色 / 状态</span></div><iframe title="版本三信号流" src="版本三-信号流.html"></iframe></article>
+  </main>
+  <div class="hint">请告诉我你偏好：版本一、版本二或版本三。也可以说“以版本一为主、借用版本三的深色状态提示”。</div>
+</body>
+</html>

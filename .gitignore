@@ -1,0 +1,8 @@
+**/node_modules/
+**/.DS_Store
+**/*.log
+**/浏览器数据/
+**/测试证据/
+**/工作流导出/
+**/*.workflow.json
+*.tmp

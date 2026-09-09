@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>版本二｜证据索引</title>
+  <style>
+    :root { --ink:#17211e; --muted:#68746f; --paper:#f5f2e9; --panel:#fffdf7; --grid:#ded9ca; --orange:#d96c3f; --green:#2f7868; --blue:#477da1; }
+    * { box-sizing:border-box; } body { margin:0; min-height:100vh; color:var(--ink); font-family:"Microsoft YaHei","Segoe UI",sans-serif; background:var(--paper); }
+    .app { min-height:100vh; display:grid; grid-template-rows:64px 1fr; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:0 24px; background:var(--panel); border-bottom:1px solid var(--grid); }
+    .title { display:flex; align-items:center; gap:13px; } .stamp { width:31px; height:31px; display:grid; place-items:center; border:2px solid var(--orange); color:var(--orange); font-weight:900; transform:rotate(-4deg); }
+    h1 { margin:0; font-size:15px; letter-spacing:.04em; } .sub { color:var(--muted); font-size:11px; margin-top:4px; }
+    .actions { display:flex; gap:7px; } button { padding:8px 11px; border:1px solid var(--grid); background:var(--panel); color:var(--ink); font-size:11px; border-radius:3px; } .primary { background:var(--orange); border-color:var(--orange); color:white; }
+    main { display:grid; grid-template-columns:190px 1fr 250px; min-height:0; }
+    nav { padding:22px 15px; border-right:1px solid var(--grid); background:#f0ede3; } nav h2 { font-size:13px; margin:7px 0 20px; } nav p { font-size:11px; color:var(--muted); line-height:1.7; }
+    .step { display:flex; gap:9px; align-items:center; padding:10px 8px; margin:4px 0; font-size:11px; border-left:3px solid transparent; } .step.active { background:var(--panel); border-left-color:var(--orange); }
+    .num { width:19px; height:19px; display:grid; place-items:center; border:1px solid var(--grid); border-radius:50%; font:700 10px Georgia,serif; }
+    .board { position:relative; overflow:hidden; background-color:#faf8f1; background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px); background-size:24px 24px; }
+    .board:after { content:"SOURCE MAP / DRAFT"; position:absolute; right:22px; top:20px; font:700 10px monospace; color:#9d9a8f; letter-spacing:.12em; }
+    svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; } .wire { fill:none; stroke:#8b958e; stroke-width:1.8; }
+    .node { position:absolute; width:176px; padding:13px; border:1px solid #c8c3b4; background:var(--panel); box-shadow:4px 5px 0 #d7d1c1; }
+    .node:before { content:""; position:absolute; left:12px; top:-6px; width:42px; height:10px; background:#e8bd77; opacity:.7; transform:rotate(-2deg); }
+    .node.green { border-left:4px solid var(--green); } .node.orange { border-left:4px solid var(--orange); } .node.blue { border-left:4px solid var(--blue); }
+    .node strong { display:block; font-size:13px; } .node small { display:block; margin-top:6px; color:var(--muted); line-height:1.5; font-size:10px; }
+    .a { left:11%; top:24%; } .b { left:42%; top:49%; } .c { left:70%; top:25%; } .d { left:69%; top:69%; }
+    .inspector { padding:22px 18px; border-left:1px solid var(--grid); background:#fdfbf5; } .eyebrow { color:var(--orange); font:700 10px monospace; letter-spacing:.12em; } .inspector h2 { font:700 19px Georgia,serif; margin:10px 0 18px; }
+    .field { padding:12px 0; border-top:1px solid var(--grid); } .field label { color:var(--muted); display:block; font-size:10px; margin-bottom:7px; } .value { font-size:12px; } .pill { display:inline-block; padding:4px 6px; color:var(--green); background:#deeee6; font-size:10px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header><div class="title"><div class="stamp">证</div><div><h1>工作流画布 / 证据索引</h1><div class="sub">把每条判断钉回真实来源</div></div></div><div class="actions"><button>+ 节点</button><button>连线</button><button class="primary">导出 JSON</button></div></header>
+    <main>
+      <nav><div class="eyebrow">WORKFLOW INDEX</div><h2>课堂 AI 复盘</h2><div class="step active"><span class="num">1</span><span>正式来源</span></div><div class="step"><span class="num">2</span><span>分析主张</span></div><div class="step"><span class="num">3</span><span>教师确认</span></div><div class="step"><span class="num">4</span><span>复盘发布</span></div><p>节点像索引卡一样排列，适合快速查看“从哪里来、到哪里去”。</p></nav>
+      <section class="board"><svg viewBox="0 0 800 620" preserveAspectRatio="none"><path class="wire" d="M220 220 C300 220 315 325 390 325"/><path class="wire" d="M565 325 C625 325 625 220 675 220"/><path class="wire" d="M565 350 C625 380 635 470 675 470"/></svg><div class="node green a"><strong>正式来源快照</strong><small>S-021 · S-024 · 当前版本</small></div><div class="node orange b"><strong>生成分析主张</strong><small>每条判断绑定 sourceRefs</small></div><div class="node blue c"><strong>教师核对</strong><small>接受 / 修改 / 拒绝</small></div><div class="node green d"><strong>发布复盘稿</strong><small>只包含已确认内容</small></div></section>
+      <aside class="inspector"><div class="eyebrow">SELECTED NODE</div><h2>生成分析主张</h2><div class="field"><label>节点类型</label><div class="value"><span class="pill">AI 分析</span></div></div><div class="field"><label>必须连接</label><div class="value">正式来源快照</div></div><div class="field"><label>发布条件</label><div class="value">教师确认后可用</div></div></aside>
+    </main>
+  </div>
+</body>
+</html>
