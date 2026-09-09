@@ -74,23 +74,27 @@ button { cursor: pointer; }
 .edge { fill: none; stroke: #4a7c8b; stroke-width: 2.4; marker-end: url(#arrow); pointer-events: stroke; cursor: pointer; }
 .edge:hover, .edge.is-selected { stroke: var(--orange); stroke-width: 3.5; }
 .temporary-edge { fill: none; stroke: var(--orange); stroke-width: 2.5; stroke-dasharray: 6 6; pointer-events: none; }
+.edge.is-loop { stroke-dasharray: 7 5; }
 .edge-label { fill: var(--muted); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .edge-label.is-selected { fill: var(--orange); }
+.edge-branch { fill: var(--orange); font-size: 11px; font-weight: 700; paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .node-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .node { position: absolute; width: 176px; min-height: 80px; display: flex; align-items: center; justify-content: center; padding: 12px 14px; border: 1px solid #aac2cd; border-top: 3px solid var(--accent); border-radius: 6px; color: var(--ink); background: var(--node); box-shadow: 0 8px 18px var(--shadow); pointer-events: auto; user-select: none; cursor: grab; }
 .node:active { cursor: grabbing; }
 .node.is-selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(36, 127, 125, .2), 0 9px 20px var(--shadow); }
 .node.is-connecting { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(217, 114, 75, .18), 0 9px 20px var(--shadow); }
 .node.shape-diamond { width: 112px; min-width: 76px; min-height: 76px; padding: 22px 13px; border: 0; background: transparent; border-radius: 0; box-shadow: none; overflow: visible; }
-.node.shape-diamond::before { position: absolute; inset: 0; z-index: 0; border: 1px solid #aac2cd; background: var(--node); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); content: ""; pointer-events: none; }
+.node.shape-diamond::before { position: absolute; inset: 0; z-index: 0; background: #aac2cd; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); content: ""; pointer-events: none; }
+.node.shape-diamond::after { position: absolute; inset: 1.5px; z-index: 0; background: var(--node); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); content: ""; pointer-events: none; }
 .node.shape-diamond .node-content { position: relative; z-index: 1; }
-.node.shape-circle { width: 112px; min-width: 76px; min-height: 76px; border-radius: 50%; border-top-width: 1px; }
+.node.shape-circle { width: 112px; min-width: 76px; min-height: 76px; aspect-ratio: 1 / 1; border-radius: 50%; border-top-width: 1px; }
 .node.shape-document { border-radius: 3px 3px 15px 15px; border-top-color: var(--orange); }
 .node.shape-triangle { width: 126px; min-width: 96px; min-height: 84px; padding: 30px 18px 14px; border: 0; background: transparent; border-radius: 0; box-shadow: none; overflow: visible; }
-.node.shape-triangle::before { position: absolute; inset: 0; z-index: 0; background: var(--node); clip-path: polygon(50% 0, 100% 100%, 0 100%); content: ""; pointer-events: none; }
+.node.shape-triangle::before { position: absolute; inset: 0; z-index: 0; background: #aac2cd; clip-path: polygon(50% 0, 100% 100%, 0 100%); content: ""; pointer-events: none; }
+.node.shape-triangle::after { position: absolute; inset: 1.5px; z-index: 0; background: var(--node); clip-path: polygon(50% 0, 100% 100%, 0 100%); content: ""; pointer-events: none; }
 .node.shape-triangle .node-content { padding-top: 18px; }
 .node.shape-triangle .node-content { position: relative; z-index: 1; }
-.node.shape-text { width: auto; min-width: 80px; min-height: 35px; border: 1px dashed #9cb7c1; border-top-width: 1px; background: rgba(255,255,255,.55); box-shadow: none; }
+.node.shape-text { min-width: 80px; min-height: 35px; border: 1px dashed #9cb7c1; border-top-width: 1px; background: rgba(255,255,255,.55); box-shadow: none; }
 .node-content { width: 100%; text-align: center; }
 .node-label { display: block; max-width: 150px; min-height: 18px; outline: none; font-size: 13px; font-weight: 700; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
 .node-note { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -146,6 +150,15 @@ button { cursor: pointer; }
 .relation-item { width: 100%; min-height: 28px; padding: 5px 8px; border: 1px solid #d6e2e6; border-radius: 4px; color: var(--ink); background: #f7fafb; font-size: 10px; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .relation-item:hover { border-color: var(--accent); background: var(--active); }
 .relation-empty { color: #9aaab1; font-size: 10px; }
+.branch-group { margin-bottom: 14px; }
+.branch-hint { display: block; margin-bottom: 6px; color: var(--muted); font-size: 10px; font-weight: 700; }
+.branch-buttons { display: flex; gap: 6px; }
+.branch-button { flex: 1; height: 30px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: #fff; font-size: 11px; }
+.branch-button:hover { border-color: var(--accent); background: var(--active); color: var(--accent-strong); }
+.branch-button.is-active { border-color: var(--accent); background: var(--active); color: var(--accent-strong); font-weight: 700; }
+.field-checkbox { margin-bottom: 14px; }
+.checkbox-label { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 11px; cursor: pointer; }
+.field-checkbox input[type="checkbox"] { width: 15px; height: 15px; margin: 0; }
 .inspector-footnote { margin: 18px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: #8999a1; font-size: 9px; line-height: 1.55; }
 .statusbar { display: flex; align-items: center; gap: 20px; padding: 0 13px 0 15px; border-top: 1px solid var(--line); color: var(--muted); background: var(--top); font-size: 10px; }
 .status-group { display: flex; align-items: center; gap: 7px; min-width: 0; }
