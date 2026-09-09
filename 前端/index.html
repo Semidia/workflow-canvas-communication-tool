@@ -21,7 +21,7 @@
       <div class="topbar-groups">
         <section class="topbar-group canvas-group" aria-labelledby="canvas-group-title">
           <h2 class="topbar-group-title" id="canvas-group-title">画布</h2>
-          <div class="canvas-tabs" id="canvasTabs" aria-label="画布标签页"></div>
+          <div class="canvas-tabs" id="canvasTabs" role="tablist" aria-label="画布标签页"></div>
         </section>
         <section class="topbar-group" aria-labelledby="edit-group-title">
           <h2 class="topbar-group-title" id="edit-group-title">编辑</h2>
@@ -68,7 +68,7 @@
         <div class="palette-help">空白处拖动可移动画布<br>双击节点可编辑文字</div>
       </aside>
 
-      <main class="canvas-viewport" id="viewport" aria-label="工作流画布">
+      <main class="canvas-viewport" id="viewport" role="tabpanel" tabindex="-1" aria-label="工作流画布">
         <div class="canvas-surface" id="surface">
           <svg class="edge-layer" id="edgeLayer" viewBox="0 0 2400 1500" aria-hidden="true">
             <defs>
