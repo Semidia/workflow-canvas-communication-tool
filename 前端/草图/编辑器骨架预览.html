@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工作流画布编辑器骨架预览</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #e8edf0; color: #1c2a34; font-family: "Microsoft YaHei", sans-serif; }
+    header { padding: 26px 34px 20px; background: #fbfcfc; border-bottom: 1px solid #d8e0e4; }
+    h1 { margin: 0; font: 700 25px Georgia, serif; }
+    header p { margin: 9px 0 0; color: #697982; font-size: 13px; }
+    main { padding: 24px 34px 36px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    article { overflow: hidden; border: 1px solid #cfd9de; background: #fff; box-shadow: 0 13px 28px #25323a16; }
+    .label { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px; }
+    .label strong { font: 700 15px Georgia, serif; }
+    .label span { color: #71808a; font-size: 11px; }
+    .editor { height: 480px; display: grid; grid-template-rows: 46px 1fr 29px; }
+    .top { display: flex; align-items: center; gap: 5px; padding: 0 10px; border-bottom: 1px solid var(--line); background: var(--top); }
+    .tab { max-width: 125px; padding: 8px 12px; border: 1px solid transparent; color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tab.active { color: var(--ink); border-color: var(--line); border-bottom-color: var(--top); background: var(--board); }
+    .plus { margin-left: auto; width: 26px; height: 26px; border: 1px solid var(--line); color: var(--ink); background: transparent; font-size: 16px; line-height: 20px; }
+    .body { display: grid; grid-template-columns: 52px 1fr; min-height: 0; }
+    .palette { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 7px; border-right: 1px solid var(--line); background: var(--palette); }
+    .tool { width: 31px; height: 31px; display: grid; place-items: center; border: 1px solid var(--line); color: var(--muted); background: transparent; font-size: 15px; }
+    .tool.active { color: var(--accent); border-color: var(--accent); background: var(--active); }
+    .board { position: relative; overflow: hidden; background-color: var(--board); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 22px 22px; }
+    .board:before { content: "画布 / 可拖动区域"; position: absolute; top: 14px; left: 16px; color: var(--muted); font: 10px monospace; }
+    svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .wire { fill: none; stroke: var(--wire); stroke-width: 2; }
+    .node { position: absolute; min-width: 105px; padding: 10px; color: var(--ink); border: 1px solid var(--node-border); border-top: 3px solid var(--accent); background: var(--node); box-shadow: 0 7px 14px var(--shadow); font-size: 11px; }
+    .node small { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .node.round { border-radius: 20px; }
+    .node.diamond { transform: rotate(45deg); width: 76px; min-width: 76px; height: 76px; padding: 23px 4px; text-align: center; }
+    .node.diamond span { display: block; transform: rotate(-45deg); }
+    .a { left: 12%; top: 28%; } .b { left: 41%; top: 49%; } .c { left: 71%; top: 28%; }
+    .status { display: flex; align-items: center; gap: 8px; padding: 0 10px; color: var(--muted); border-top: 1px solid var(--line); background: var(--top); font: 10px monospace; }
+    .status .zoom { margin-left: auto; color: var(--ink); }
+    .paper { --ink:#24302e; --muted:#78837f; --line:#d2d7cc; --top:#fbfaf4; --palette:#f0eee5; --board:#fffdf7; --grid:#e6e3d9; --accent:#cf7047; --active:#fff1e9; --wire:#8e9890; --node:#fffdf7; --node-border:#c4c7bb; --shadow:#3d403615; }
+    .blueprint { --ink:#183148; --muted:#6e8291; --line:#c7d6e0; --top:#f8fbfc; --palette:#edf3f6; --board:#edf4f7; --grid:#d6e2e8; --accent:#247f7d; --active:#dff1ee; --wire:#668b98; --node:#fff; --node-border:#afc5d0; --shadow:#1831481a; }
+    .night { --ink:#e8f0ec; --muted:#8ca19b; --line:#344b4b; --top:#172426; --palette:#142021; --board:#132022; --grid:#25383a; --accent:#c9e96e; --active:#24362d; --wire:#6dd1c2; --node:#1d2c2e; --node-border:#46615e; --shadow:#00000042; }
+    .night .node.diamond { border-top-color: var(--accent); }
+    .hint { padding: 0 34px 28px; color: #667580; font-size: 12px; }
+    @media (max-width: 1100px) { main { grid-template-columns: 1fr; } .editor { height: 430px; } }
+  </style>
+</head>
+<body>
+  <header><h1>工作流画布 / 编辑器骨架</h1><p>这三版都采用你草图里的基本架构：顶部标签页、左侧工具栏、中间大画布、底部缩放状态。</p></header>
+  <main>
+    <article><div class="label"><strong>版本四 · 白纸工作台</strong><span>轻 / 直观</span></div><div class="editor paper"><div class="top"><div class="tab active">课堂复盘</div><div class="tab">新工作流</div><button class="plus">+</button></div><div class="body"><div class="palette"><div class="tool active">↖</div><div class="tool">□</div><div class="tool">◇</div><div class="tool">○</div><div class="tool">╱</div><div class="tool">T</div></div><div class="board"><svg viewBox="0 0 400 400" preserveAspectRatio="none"><path class="wire" d="M115 176 C170 176 185 240 220 240"/><path class="wire" d="M280 240 C315 240 315 176 350 176"/></svg><div class="node a">选择范围<small>正式来源</small></div><div class="node round b">AI 分析<small>带来源主张</small></div><div class="node c">教师确认<small>发布</small></div></div></div><div class="status"><span>画布已保存</span><span class="zoom">100%　−　＋</span></div></div></article>
+    <article><div class="label"><strong>版本五 · 法律蓝图</strong><span>稳 / 清楚</span></div><div class="editor blueprint"><div class="top"><div class="tab active">课堂复盘</div><div class="tab">证据链</div><div class="tab">发送稿</div><button class="plus">+</button></div><div class="body"><div class="palette"><div class="tool active">↖</div><div class="tool">▭</div><div class="tool">◇</div><div class="tool">○</div><div class="tool">↗</div><div class="tool">T</div></div><div class="board"><svg viewBox="0 0 400 400" preserveAspectRatio="none"><path class="wire" d="M115 176 C170 176 185 240 220 240"/><path class="wire" d="M280 240 C315 240 315 176 350 176"/></svg><div class="node a">正式快照<small>S-021 · v12</small></div><div class="node diamond b"><span>AI<br>分析</span></div><div class="node c">教师核对<small>接受 / 修改</small></div></div></div><div class="status"><span>当前画布：课堂复盘</span><span class="zoom">100%　−　＋</span></div></div></article>
+    <article><div class="label"><strong>版本六 · 夜间编排</strong><span>深 / 状态</span></div><div class="editor night"><div class="top"><div class="tab active">课堂复盘</div><div class="tab">运行记录</div><button class="plus">+</button></div><div class="body"><div class="palette"><div class="tool active">↖</div><div class="tool">▣</div><div class="tool">◇</div><div class="tool">●</div><div class="tool">⌁</div><div class="tool">T</div></div><div class="board"><svg viewBox="0 0 400 400" preserveAspectRatio="none"><path class="wire" d="M115 176 C170 176 185 240 220 240"/><path class="wire" d="M280 240 C315 240 315 176 350 176"/></svg><div class="node a">scope.confirm<small>ready</small></div><div class="node round b">model.generate<small>waiting_teacher</small></div><div class="node c">publish.confirm<small>locked</small></div></div></div><div class="status"><span>未运行</span><span class="zoom">100%　−　＋</span></div></div></article>
+  </main>
+  <div class="hint">请比较版本四、五、六的整体气质。基本架构已经固定，后续只按你选中的风格实现真正交互。</div>
+</body>
+</html>
