@@ -55,6 +55,8 @@ try {
   check("注入状态渲染 3 节点 1 连线", nodeCount === 3 && edgeCount === 1, `nodes=${nodeCount} edges=${edgeCount}`);
   const bIsDiamond = await page.locator('.node[data-node-id="b"]').getAttribute("class");
   check("判断节点渲染为 shape-diamond", /shape-diamond/.test(bIsDiamond || ""), bIsDiamond);
+  const pendingCount0 = await page.locator(".edge-branch-pending").count();
+  check("未标注的判断连线显示「未标分支」提示", pendingCount0 === 1, `pending=${pendingCount0}`);
 
   // 1. 判断条件字段只在 diamond 显示
   await page.locator('.node[data-node-id="b"]').click();
@@ -97,6 +99,8 @@ try {
   check("点「是」不污染连线名称", e1AfterShi?.label === "" , `label="${e1AfterShi?.label}"`);
   const activeShi = await page.locator('.branch-button[data-branch="是"]').getAttribute("class");
   check("「是」按钮呈选中态", /is-active/.test(activeShi || ""), activeShi);
+  const pendingAfterShi = await page.locator(".edge-branch-pending").count();
+  check("标注分支后提示消失", pendingAfterShi === 0, `pending=${pendingAfterShi}`);
   await page.locator("#inspectorEdgeName").fill("审批通过");
   await page.locator("#inspectorEdgeName").press("Tab");
   await page.waitForTimeout(120);
