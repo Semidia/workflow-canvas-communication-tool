@@ -6,3 +6,4 @@
 **/工作流导出/
 **/*.workflow.json
 *.tmp
+**/__pycache__/

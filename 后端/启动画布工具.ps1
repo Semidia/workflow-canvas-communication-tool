@@ -116,10 +116,15 @@ if ($canvasReused) {
   Write-Host "旧画布已终止，正在重新启动端口 $Port。"
 }
 
+$serverScript = Join-Path $PSScriptRoot "canvas_server.py"
+if (-not (Test-Path -LiteralPath $serverScript -PathType Leaf)) {
+  throw "找不到后端服务脚本：$serverScript"
+}
+
 $serverProcess = $null
 try {
   $serverProcess = Start-Process -FilePath $pythonCommand.Source -ArgumentList @(
-    "-m", "http.server", $Port, "--bind", $address
+    $serverScript, $Port
   ) -WorkingDirectory $frontendRoot -WindowStyle Hidden -PassThru
 
   $ready = $false
