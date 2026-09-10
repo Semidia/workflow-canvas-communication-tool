@@ -21,7 +21,10 @@
       <div class="topbar-groups">
         <section class="topbar-group canvas-group" aria-labelledby="canvas-group-title">
           <h2 class="topbar-group-title" id="canvas-group-title">画布</h2>
-          <div class="canvas-tabs" id="canvasTabs" role="tablist" aria-label="画布标签页"></div>
+          <div class="canvas-tabs-wrap">
+            <div class="canvas-tabs" id="canvasTabs" role="tablist" aria-label="画布标签页"></div>
+            <button class="new-tab" id="newCanvasButton" type="button" title="新建画布" aria-label="新建画布">＋</button>
+          </div>
         </section>
         <section class="topbar-group" aria-labelledby="edit-group-title">
           <h2 class="topbar-group-title" id="edit-group-title">编辑</h2>
@@ -153,12 +156,25 @@
             <label for="inspectorEdgeName" id="edgeNameLabel">连线名称</label>
             <input id="inspectorEdgeName" name="edgeLabel" type="text" maxlength="80" autocomplete="off" placeholder="例如：审批、依赖、下一步">
           </div>
+          <div class="edge-style-group">
+            <span class="edge-style-label">线条粗细</span>
+            <div class="width-buttons">
+              <button type="button" class="width-button" data-width="thin">细</button>
+              <button type="button" class="width-button" data-width="medium">中</button>
+              <button type="button" class="width-button" data-width="thick">粗</button>
+            </div>
+          </div>
+          <div class="edge-style-group">
+            <span class="edge-style-label">线条颜色</span>
+            <div class="color-swatches" id="edgeColorSwatches"></div>
+          </div>
           <div class="field-group field-checkbox">
             <label class="checkbox-label">
               <input id="inspectorEdgeLoop" name="loop" type="checkbox">
               <span>循环回边（虚线显示）</span>
             </label>
           </div>
+          <button type="button" class="edge-delete-button" data-action="delete-edge">删除这条连线</button>
           <p class="inspector-footnote">分支标签（是 / 否 / 未定）与连线名称相互独立，分别显示在连线旁；留空则不显示。循环回边为手动标记，仅以虚线提示，不参与自动执行。</p>
         </form>
       </aside>
