@@ -3,7 +3,8 @@ import fs from "node:fs";
 
 const require = createRequire("D:/nodejs/npm-global/package.json");
 const { chromium } = require("playwright");
-const url = process.argv[2] || "http://127.0.0.1:4173/index.html";
+import { resolveCanvasUrl } from "./_served-target.mjs";
+const url = await resolveCanvasUrl(process.argv[2]);
 const screenshotDir = process.argv[3] || "D:/agent临时/郄的工作流画布沟通工具验收";
 fs.mkdirSync(screenshotDir, { recursive: true });
 
@@ -27,10 +28,10 @@ const expect = (condition, message) => {
 const initialNodes = await page.locator(".node").count();
 expect(initialNodes === 4, `expected 4 initial nodes, got ${initialNodes}`);
 expect((await page.title()).includes("设计沟通画布"), "page title should use the general communication canvas name");
-expect(await page.locator(".topbar-group-title").allTextContents().then((items) => JSON.stringify(items) === JSON.stringify(["画布", "编辑", "文件"])), "topbar groups should be canvas/edit/file");
+expect(await page.locator(".topbar-group-title").allTextContents().then((items) => JSON.stringify(items) === JSON.stringify(["画布", "编辑", "文件", "模块"])), "topbar groups should be canvas/edit/file/module");
 const paletteSections = await page.locator(".palette-section-title").allTextContents();
 expect(JSON.stringify(paletteSections) === JSON.stringify(["操作", "节点"]), `expected 操作/节点 groups, got ${JSON.stringify(paletteSections)}`);
-expect(await page.locator('[aria-labelledby="palette-actions-title"] [data-tool]').count() === 3, "operation group should contain 3 tools");
+expect(await page.locator('[aria-labelledby="palette-actions-title"] [data-tool]').count() === 4, "operation group should contain 4 tools");
 expect(await page.locator('[aria-labelledby="palette-nodes-title"] [data-tool]').count() === 5, "node group should contain 5 tools");
 expect(JSON.stringify(await page.locator('[aria-labelledby="palette-nodes-title"] small').allTextContents()) === JSON.stringify(["步骤", "判断", "开始/结束", "材料", "提醒"]), "node tools should use purpose names");
 expect(await page.locator(".node-marker").count() === initialNodes, "every node should show a discussion marker");
