@@ -45,6 +45,41 @@ function Test-CanvasPage {
   }
 }
 
+# 「端口上这一份，是不是本机这一份？」——按内容认人，不靠页面像不像。
+# 为什么必须这么查：旧版画布、别处的副本，页面同样含「设计沟通画布」和 app.js，
+# 光凭 Test-CanvasPage 会把它们都认成「画布已经开着」，于是直接「打开正在运行的画布」，
+# 用户看到的就是旧版，而不是本机刚合并出来的这一份。
+function Test-SameAsLocalFrontend {
+  param([int]$CandidatePort)
+
+  $localAppJs = Join-Path $frontendRoot "app.js"
+  if (-not (Test-Path -LiteralPath $localAppJs -PathType Leaf)) {
+    return $null   # 本机没有 app.js，比不了，交回老判断
+  }
+  try {
+    $localHash = (Get-FileHash -LiteralPath $localAppJs -Algorithm SHA256).Hash
+  } catch {
+    return $null
+  }
+
+  try {
+    $response = Invoke-WebRequest -Uri "http://$address`:$CandidatePort/app.js" -UseBasicParsing -TimeoutSec 2
+    $bytes = if ($response.Content -is [byte[]]) {
+      $response.Content
+    } else {
+      [System.Text.Encoding]::UTF8.GetBytes([string]$response.Content)
+    }
+    if (-not $bytes -or $bytes.Length -eq 0) {
+      return $null
+    }
+    $remoteHash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new($bytes)) -Algorithm SHA256).Hash
+  } catch {
+    return $null
+  }
+
+  return ($remoteHash -eq $localHash)
+}
+
 function Stop-CanvasListeners {
   param(
     [object[]]$Listeners,
@@ -81,9 +116,15 @@ while ($true) {
 
   if (Test-CanvasPage -CandidatePort $selectedPort) {
     $runningUrl = "http://$address`:$selectedPort/index.html"
+    $sameAsLocal = Test-SameAsLocalFrontend -CandidatePort $selectedPort
     Write-Host "检测到画布已经在运行：$runningUrl"
+    if ($sameAsLocal -eq $false) {
+      Write-Host "注意：端口上这一份不是本机这一份（前端内容对不上，通常是旧版画布，或别处目录的副本）。"
+      Write-Host "      选 2 看到的很可能不是新版；要拿到本机这一份（新版），请选 1。"
+    }
+    $restartHint = if ($sameAsLocal -eq $false) { "（推荐）" } else { "" }
     Write-Host "请选择："
-    Write-Host "1. 终止当前画布进程并重新启动"
+    Write-Host "1. 终止当前画布进程并重新启动$restartHint"
     Write-Host "2. 打开正在运行的画布"
 
     do {

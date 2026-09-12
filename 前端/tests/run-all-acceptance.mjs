@@ -89,12 +89,20 @@ for (const suite of suites) {
   // "✅ 场景名"，有的是 "场景1 连续放置不重叠：通过"。所以按「不是失败、也不是备注」来数
   // 通过条数——❌ 是失败，ℹ️/⚠️ 是留档或告警，都不算通过。数不出来时宁可显示 ?，也不硬凑。
   const notPassMarks = ["❌", "ℹ️", "⚠️"];
+  // 自报断言条数的字段名各套件没统一：有用「断言总数」的，也有用「断言条数」的。
+  // 两种都认，认到哪个用哪个；一个都没有才算「这个套件没报条数」（显示 ?）。
+  // 注意这里只放宽「字段名的叫法」，不放宽语义：仍然要扣掉 badStrings 的条数。
+  const declaredAssertions = parsed && Number.isFinite(parsed.断言总数)
+    ? parsed.断言总数
+    : parsed && Number.isFinite(parsed.断言条数)
+      ? parsed.断言条数
+      : null;
   const passCount = summary && Number.isFinite(summary.passed)
     ? summary.passed
     : parsed && Array.isArray(parsed.results)
       ? parsed.results.filter((line) => typeof line === "string" && !notPassMarks.some((mark) => line.includes(mark))).length
-      : parsed && Number.isFinite(parsed.断言总数)
-        ? parsed.断言总数 - badStrings.length
+      : declaredAssertions !== null
+        ? declaredAssertions - badStrings.length
         : null;
   const failCount = summary && Number.isFinite(summary.failed)
     ? summary.failed

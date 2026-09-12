@@ -223,6 +223,11 @@
         </div>
         <button class="modal-close" type="button" data-action="close-modules" title="关闭模块库" aria-label="关闭模块库">×</button>
       </header>
+      <div class="module-toolbar">
+        <button class="text-button" type="button" data-action="export-modules" title="把整个模块库导出成一个 JSON 文件，方便换电脑或发给别人">导出模块库</button>
+        <button class="text-button" type="button" data-action="import-modules" title="从 JSON 文件导入模块，与本机模块库合并；同一个 id 的以文件为准，本机其他模块不受影响">导入模块库</button>
+        <input id="moduleImportInput" type="file" accept="application/json,.json" hidden>
+      </div>
       <div class="module-list" id="moduleList"></div>
       <footer class="modal-footer">
         <p class="module-footnote">模块保存在本机浏览器，可在任意画布放置复用。点「编辑」把模块铺到当前画布上修改，改完点「保存回模块」就地更新；点「取消编辑」则不改动原模块。</p>
