@@ -1,0 +1,42 @@
+# 统一行尾，避免同一份文件在两台机器上显示成「整份改动」。
+#
+# 起因：本仓库在 Windows 上提交、也可能在 Linux 上合并。两边 git 的
+# core.autocrlf 设置不一致时，同一个 .js/.html/.css 会被看成整文件改写，
+# 真正的改动就淹没在假改动里，评审时根本看不出改了什么。
+#
+# 约定：仓库里一律存 LF，检出到工作区也用 LF（不随平台变），
+# 于是任何一台机器上看到的同一版本都是同样的字节。
+* text=auto eol=lf
+
+# 例外：Windows 自己的启动器/脚本必须用 CRLF。
+#
+# 起因：下面这几行不加，上面那句 eol=lf 会把它们也变成 LF。而 Windows 的
+# cmd.exe 解析 .bat 时的换行处理很挑——LF 的行尾在个别位置（尤其是带标签
+# goto、以及行尾紧跟 ^ 续行的写法）会让命令被吞掉或串行，双击时表现为
+# 「一闪而过」或「什么都没发生」。仓库里的 启动画布工具.bat 正是桌面快捷
+# 方式双击链路的那一环，坏在这里代价最大。
+#
+# 这三个文件钉成 eol=crlf 之后，无论在哪台机器、哪个系统上检出，工作区
+# 拿到的都是 CRLF，不会再出现「克隆到干净机器上得到一个 LF 版 .bat」的隐患。
+#
+# 注意：eol=crlf 的意思只是「检出到工作区时写成 CRLF」，仓库(索引)里存的
+# 仍然是 LF——git 对所有 text 文件都一样，只在进出工作区时转换。别误以为
+# 这是「仓库里存 CRLF」。真要仓库里存 CRLF 得用 -text，那会连 diff 和合并
+# 一起去掉，得不偿失，不采用。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制文件明确排除，别让 Git 去猜（猜错会损坏文件）。
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.bmp  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.zip  binary
+*.xlsx binary
+*.pdf  binary
