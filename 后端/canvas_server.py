@@ -8,8 +8,11 @@
 """
 import json
 import os
+import shutil
 import sys
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+import threading
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+from urllib.parse import urlparse
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -22,6 +25,8 @@ FRONTEND = os.path.join(ROOT, "前端")
 EXPORT_DIR = os.path.join(ROOT, "工作流导出")
 STATE_FILE = os.path.join(EXPORT_DIR, "画布数据.json")
 API_PATH = "/api/state"
+MAX_BODY_BYTES = 32 * 1024 * 1024
+MAX_CANVASES = 100
 
 
 class CanvasHandler(SimpleHTTPRequestHandler):
@@ -33,21 +38,38 @@ class CanvasHandler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
 
     def _is_api(self):
         return self.path.split("?")[0].rstrip("/") == API_PATH
 
+    def _is_local_request(self):
+        host = self.headers.get("Host", "")
+        hostname = host.rsplit(":", 1)[0] if ":" in host else host
+        if hostname not in ("127.0.0.1", "localhost"):
+            return False
+        origin = self.headers.get("Origin")
+        if origin:
+            o = urlparse(origin)
+            if o.hostname not in ("127.0.0.1", "localhost"):
+                return False
+        return True
+
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
     def do_GET(self):
         if self._is_api():
+            if not self._is_local_request():
+                return self._send_json({"ok": False, "error": "禁止跨源访问"}, 403)
             if not os.path.exists(STATE_FILE):
                 return self._send_json(
                     {"ok": False, "error": "尚无磁盘保存", "file": STATE_FILE}, 404
                 )
             try:
-                with open(STATE_FILE, "r", encoding="utf-8") as f:
+                with open(STATE_FILE, "r", encoding="utf-8-sig") as f:
                     data = json.load(f)
             except (OSError, ValueError) as exc:
                 return self._send_json(
@@ -59,22 +81,36 @@ class CanvasHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         if not self._is_api():
             return self._send_json({"ok": False, "error": "未知接口"}, 404)
+        if not self._is_local_request():
+            return self._send_json({"ok": False, "error": "禁止跨源访问"}, 403)
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
-            length = 0
+            length = -1
+        if length < 0 or length > MAX_BODY_BYTES:
+            return self._send_json({"ok": False, "error": "请求体过大或长度非法"}, 413)
         body = self.rfile.read(length) if length else b""
         if not body:
             return self._send_json({"ok": False, "error": "请求体为空"}, 400)
         try:
-            data = json.loads(body.decode("utf-8"))
+            data = json.loads(body.decode("utf-8-sig"))
         except (UnicodeDecodeError, ValueError) as exc:
             return self._send_json({"ok": False, "error": f"JSON 解析失败：{exc}"}, 400)
         if not isinstance(data, dict) or not isinstance(data.get("canvases"), list):
             return self._send_json({"ok": False, "error": "数据缺少 canvases 数组"}, 400)
+        if len(data["canvases"]) > MAX_CANVASES:
+            return self._send_json({"ok": False, "error": "画布数量超限"}, 400)
+        for c in data["canvases"]:
+            if not isinstance(c, dict):
+                return self._send_json({"ok": False, "error": "画布数据格式非法"}, 400)
+            if not isinstance(c.get("nodes"), list) or not isinstance(c.get("edges"), list):
+                return self._send_json({"ok": False, "error": "画布缺少 nodes/edges 数组"}, 400)
+        tmp = None
         try:
             os.makedirs(EXPORT_DIR, exist_ok=True)
-            tmp = STATE_FILE + ".tmp"
+            if os.path.exists(STATE_FILE):
+                shutil.copy2(STATE_FILE, STATE_FILE + ".bak")
+            tmp = f"{STATE_FILE}.{os.getpid()}.{threading.get_ident()}.tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             os.replace(tmp, STATE_FILE)
@@ -82,6 +118,12 @@ class CanvasHandler(SimpleHTTPRequestHandler):
             return self._send_json(
                 {"ok": False, "error": f"写入磁盘文件失败：{exc}", "file": STATE_FILE}, 500
             )
+        finally:
+            if tmp and os.path.exists(tmp):
+                try:
+                    os.remove(tmp)
+                except OSError:
+                    pass
         return self._send_json({"ok": True, "file": STATE_FILE})
 
 
@@ -92,7 +134,7 @@ def main():
             port = int(sys.argv[1])
         except ValueError:
             port = 4173
-    server = HTTPServer(("127.0.0.1", port), CanvasHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), CanvasHandler)
     print(f"画布服务已启动：http://127.0.0.1:{port}/index.html")
     print(f"数据落盘文件：{STATE_FILE}")
     server.serve_forever()
