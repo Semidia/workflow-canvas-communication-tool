@@ -74,11 +74,7 @@
       <main class="canvas-viewport" id="viewport" role="tabpanel" tabindex="-1" aria-label="工作流画布">
         <div class="canvas-surface" id="surface">
           <svg class="edge-layer" id="edgeLayer" viewBox="0 0 2400 1500" aria-hidden="true">
-            <defs>
-              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L8,4 L0,8 z" fill="#4a7c8b"></path>
-              </marker>
-            </defs>
+            <defs></defs>
             <g id="edges"></g>
             <path id="temporaryEdge" class="temporary-edge" d="" hidden></path>
           </svg>
@@ -181,8 +177,8 @@
     </div>
 
     <footer class="statusbar">
-      <div class="status-group status-save"><span class="status-dot" id="statusDot"></span><span class="status-label">保存</span><span id="saveStatus">尚未保存</span></div>
-      <div class="status-group status-selection"><span class="status-label">选择</span><span id="selectionStatus">未选择节点</span></div>
+      <div class="status-group status-save"><span class="status-dot" id="statusDot"></span><span class="status-label">保存</span><span id="saveStatus" aria-live="polite">尚未保存</span></div>
+      <div class="status-group status-selection"><span class="status-label">选择</span><span id="selectionStatus" aria-live="polite">未选择节点</span></div>
       <div class="status-group zoom-controls" aria-label="缩放控制">
         <span class="status-label">缩放</span>
         <button class="zoom-button" data-action="zoom-out" title="缩小" aria-label="缩小">−</button>
