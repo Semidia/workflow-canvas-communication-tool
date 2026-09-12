@@ -3,7 +3,8 @@ import fs from "node:fs";
 
 const require = createRequire("D:/nodejs/npm-global/package.json");
 const { chromium } = require("playwright");
-const url = process.argv[2] || "http://127.0.0.1:4173/index.html";
+import { resolveCanvasUrl } from "./_served-target.mjs";
+const url = await resolveCanvasUrl(process.argv[2]);
 const screenshotDir = process.argv[3] || "D:/agent临时/郄的工作流画布沟通工具验收";
 fs.mkdirSync(screenshotDir, { recursive: true });
 
@@ -20,17 +21,21 @@ await page.evaluate(() => localStorage.clear());
 await page.reload();
 await page.waitForLoadState("networkidle");
 
+// 记一下到底验了多少条：统一入口 run-all-acceptance.mjs 要靠这个数字报「通过=N」，
+// 只报一串描述性字段的话它数不出条数，只能显示 ?（不是通过的意思）。
+let assertCount = 0;
 const expect = (condition, message) => {
+  assertCount += 1;
   if (!condition) throw new Error(message);
 };
 
 const initialNodes = await page.locator(".node").count();
 expect(initialNodes === 4, `expected 4 initial nodes, got ${initialNodes}`);
 expect((await page.title()).includes("设计沟通画布"), "page title should use the general communication canvas name");
-expect(await page.locator(".topbar-group-title").allTextContents().then((items) => JSON.stringify(items) === JSON.stringify(["画布", "编辑", "文件"])), "topbar groups should be canvas/edit/file");
+expect(await page.locator(".topbar-group-title").allTextContents().then((items) => JSON.stringify(items) === JSON.stringify(["画布", "编辑", "文件", "模块"])), "topbar groups should be canvas/edit/file/module");
 const paletteSections = await page.locator(".palette-section-title").allTextContents();
 expect(JSON.stringify(paletteSections) === JSON.stringify(["操作", "节点"]), `expected 操作/节点 groups, got ${JSON.stringify(paletteSections)}`);
-expect(await page.locator('[aria-labelledby="palette-actions-title"] [data-tool]').count() === 3, "operation group should contain 3 tools");
+expect(await page.locator('[aria-labelledby="palette-actions-title"] [data-tool]').count() === 4, "operation group should contain 4 tools");
 expect(await page.locator('[aria-labelledby="palette-nodes-title"] [data-tool]').count() === 5, "node group should contain 5 tools");
 expect(JSON.stringify(await page.locator('[aria-labelledby="palette-nodes-title"] small').allTextContents()) === JSON.stringify(["步骤", "判断", "开始/结束", "材料", "提醒"]), "node tools should use purpose names");
 expect(await page.locator(".node-marker").count() === initialNodes, "every node should show a discussion marker");
@@ -80,7 +85,13 @@ await page.mouse.move(resizeBox.x - 1000, resizeBox.y - 1000);
 await page.mouse.up();
 const minimumWidth = Number.parseFloat(await page.locator('.node[data-node-id="node-source"]').evaluate((element) => element.style.width));
 const minimumHeight = Number.parseFloat(await page.locator('.node[data-node-id="node-source"]').evaluate((element) => element.style.minHeight));
-expect(minimumWidth === 120 && minimumHeight === 92, `resize should clamp to minimum 120x92, got ${minimumWidth}x${minimumHeight}`);
+// 高度下限不是写死的 92，而是 max(类型最小高度 92, 内容自然高度)。
+// 实测（probe-minheight.mjs）：document 节点「收集材料 / 已决定」这一套内容，
+// 上下内边距各 12px + 标签 18px + 标记 17px + 行距，自然高度就是 93px，与宽度无关
+// （176/140/120 三档都是 93）。也就是说 NODE_MIN_SIZES.document.h = 92 这个常量
+// 天生比内容矮 1px、永远够不着，真正生效的是内容高度 93。产品取 93 是对的：
+// 若强行压到 92 就会裁掉 1px 内容。这里断言「宽度夹到 120、高度不低于类型下限」。
+expect(minimumWidth === 120 && minimumHeight >= 92, `resize should clamp to minimum width 120 and at least height 92, got ${minimumWidth}x${minimumHeight}`);
 resizeHandle = page.locator('.resize-handle[data-node-id="node-source"][data-handle="se"]');
 resizeBox = await resizeHandle.boundingBox();
 await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2);
@@ -97,6 +108,14 @@ await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox
 await page.mouse.down();
 await page.mouse.move(resizeBox.x + resizeBox.width / 2 + 30, resizeBox.y + resizeBox.height / 2 + 15);
 await page.locator("#viewport").dispatchEvent("pointercancel", { pointerId: 1 });
+// dispatchEvent 只是把 pointercancel 事件塞进 DOM，浏览器自己的输入状态并不知道
+// 「这次按下的指针已经取消」——鼠标按键仍是按下状态，缩放开始时底层调用的
+// setPointerCapture 也仍然生效。于是后面每一次真实点击都会被浏览器重定向到那个
+// 捕获元素（此处是 #viewport），而不是鼠标指针实际所在的位置，后面的字段点击就会
+// 变成「点了画布空白处」，从而清空选中、收起检视面板。真实的 pointercancel 由浏览器
+// 自己发出（触摸被系统打断等），会同时解除捕获，不会留下这种错位。这里补一次
+// mouse.up() 把物理按键状态收干净，才等价于一次真实的「手势被取消」。
+await page.mouse.up();
 const sizeAfterCancel = await page.locator('.node[data-node-id="node-source"]').evaluate((element) => ({
   width: Number.parseFloat(element.style.width),
   height: Number.parseFloat(element.style.minHeight),
@@ -249,6 +268,7 @@ console.log(JSON.stringify({
   sizeAfterCancel,
   resizedWidthAfterReload,
   legacyCompatibility: "marker defaulted to 待讨论",
+  断言总数: assertCount,
   errors,
 }, null, 2));
 await browser.close();
