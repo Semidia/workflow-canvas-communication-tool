@@ -44,6 +44,13 @@
             <button class="primary-button" data-action="save" title="保存到本机浏览器">保存</button>
           </div>
         </section>
+        <section class="topbar-group" aria-labelledby="module-group-title">
+          <h2 class="topbar-group-title" id="module-group-title">模块</h2>
+          <div class="topbar-controls">
+            <button class="text-button" data-action="save-module" title="把选中或框选的节点封装为可复用模块">封装为模块</button>
+            <button class="text-button" data-action="open-modules" title="打开模块库，放置或管理模块">模块库</button>
+          </div>
+        </section>
       </div>
     </header>
 
@@ -56,6 +63,7 @@
             <button class="tool-button is-active" data-tool="select" title="选择和移动（V）" aria-label="选择和移动"><span>↖</span><small>选择</small></button>
             <button class="tool-button" data-tool="text" title="在画布上添加文字（T）" aria-label="添加文字"><span>T</span><small>文字</small></button>
             <button class="tool-button" data-tool="connector" title="拖动端点或点击两个节点连线" aria-label="连接节点"><span>⌁</span><small>连线</small></button>
+            <button class="tool-button" data-tool="marquee" title="拖动框选多个节点（M）" aria-label="框选节点"><span>⧉</span><small>框选</small></button>
           </div>
         </section>
         <section class="palette-section" aria-labelledby="palette-nodes-title">
@@ -79,9 +87,17 @@
             <path id="temporaryEdge" class="temporary-edge" d="" hidden></path>
           </svg>
           <div class="node-layer" id="nodeLayer"></div>
+          <div class="marquee" id="marquee" hidden></div>
           <div class="canvas-watermark">WORKFLOW / LOCAL DRAFT</div>
         </div>
         <div class="canvas-empty" id="canvasEmpty" hidden>选择左侧工具，在画布空白处放置节点</div>
+        <div class="module-edit-bar" id="moduleEditBar" hidden>
+          <span class="module-edit-label">正在编辑模块：<strong id="moduleEditName"></strong></span>
+          <div class="module-edit-actions">
+            <button class="primary-button" type="button" data-action="save-module-edit" title="把当前画布内容写回这个模块，原模块就地更新">保存回模块</button>
+            <button class="text-button" type="button" data-action="cancel-module-edit" title="不改动原模块，直接退出编辑">取消编辑</button>
+          </div>
+        </div>
         <div class="selection-hint" id="selectionHint" hidden></div>
       </main>
 
@@ -173,6 +189,16 @@
           <button type="button" class="edge-delete-button" data-action="delete-edge">删除这条连线</button>
           <p class="inspector-footnote">分支标签（是 / 否 / 未定）与连线名称相互独立，分别显示在连线旁；留空则不显示。循环回边为手动标记，仅以虚线提示，不参与自动执行。</p>
         </form>
+        <div class="multi-select-panel" id="multiSelectPanel" hidden>
+          <p class="eyebrow">框选结果</p>
+          <h2>已框选节点</h2>
+          <p class="multi-select-summary" id="multiSelectSummary"></p>
+          <div class="multi-select-actions">
+            <button class="primary-button" type="button" data-action="save-module">封装为模块</button>
+            <button class="text-button" type="button" data-action="clear-multi-select">清除选择</button>
+          </div>
+          <p class="inspector-footnote">封装只保留两端都在框选内的连线；边界连线不会带入模块。</p>
+        </div>
       </aside>
     </div>
 
@@ -188,6 +214,21 @@
     </footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-backdrop" id="moduleModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="moduleModalTitle">
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">复用</p>
+          <h2 id="moduleModalTitle">模块库</h2>
+        </div>
+        <button class="modal-close" type="button" data-action="close-modules" title="关闭模块库" aria-label="关闭模块库">×</button>
+      </header>
+      <div class="module-list" id="moduleList"></div>
+      <footer class="modal-footer">
+        <p class="module-footnote">模块保存在本机浏览器，可在任意画布放置复用。点「编辑」把模块铺到当前画布上修改，改完点「保存回模块」就地更新；点「取消编辑」则不改动原模块。</p>
+      </footer>
+    </div>
+  </div>
   <script defer src="app.js"></script>
 </body>
 </html>
