@@ -84,7 +84,12 @@ button { cursor: pointer; }
 .edge-branch { fill: var(--orange); font-size: 11px; font-weight: 700; paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .edge-branch-pending { fill: var(--muted); font-size: 10px; font-style: italic; paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .node-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.node { position: absolute; width: 176px; min-height: 80px; display: flex; align-items: center; justify-content: center; padding: 12px 14px; border: 1px solid #aac2cd; border-top: 3px solid var(--accent); border-radius: 6px; color: var(--ink); background: var(--node); box-shadow: 0 8px 18px var(--shadow); pointer-events: auto; user-select: none; cursor: grab; touch-action: none; }
+/* isolation: isolate 是治本的一行，别删：端口、缩放手柄、缩放按钮都写了自己的 z-index（7/6/8），
+   而 .node 自己不建层叠上下文，这些 z-index 就跑到「所有节点」这一层去比较了——结果是下面那个节点
+   的端口热区（见下方 .node .port::after，实测 40×40，dpr=1.25 时为 40.8）会盖在上面那个节点的本体上，按在上层节点
+   看得见的内容上，却从下层节点拉出一条连线。加上 isolate 之后，这些 z-index 只在「自己这个节点内部」
+   比较，命中就始终跟着「谁看得见在上面」走。注意：这一行只改「谁赢」，不改任何热区尺寸，手感不变。 */
+.node { position: absolute; isolation: isolate; width: 176px; min-height: 80px; display: flex; align-items: center; justify-content: center; padding: 12px 14px; border: 1px solid #aac2cd; border-top: 3px solid var(--accent); border-radius: 6px; color: var(--ink); background: var(--node); box-shadow: 0 8px 18px var(--shadow); pointer-events: auto; user-select: none; cursor: grab; touch-action: none; }
 .node:active { cursor: grabbing; }
 .node.is-selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(36, 127, 125, .2), 0 9px 20px var(--shadow); }
 .node.is-connecting { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(217, 114, 75, .18), 0 9px 20px var(--shadow); }
@@ -210,7 +215,15 @@ button { cursor: pointer; }
 .context-menu-item.is-danger:hover:not(:disabled) { background: #fdf0ea; color: var(--orange); }
 .context-menu-item:disabled { color: #b7c4ca; cursor: default; }
 .context-menu-separator { height: 1px; margin: 4px 6px; background: var(--line); }
-/* 触摸命中区域放大到 ≥44px（视觉尺寸不变，仅扩大可点范围） */
+/* 触摸命中区域放大（视觉尺寸不变，仅扩大可点范围）。
+   实测口径：端口 16px 是 border-box，内含 2px 边框 → padding box 只剩 12px，
+   ::after 的 inset 是相对 padding box 的，所以实际热区 = 12 + 14×2 = 40×40（半径 20 像素），
+   不是 44×44。这是 2026-09-13 用 getComputedStyle(port, "::after").width 实测的（得到 40px）。
+   补充：2026-09-13 在 devicePixelRatio=1.25 的真实 Chrome 上量到的是 40.8×40.8——浏览器会把
+   2px 边框按设备像素取整（2 × 1.25 = 2.5 取成 2 设备像素，计算值报 1.6px），于是 padding box
+   变成 12.8px。差值来自渲染取整、不来自这份 CSS，换台显示器就会变，别照它改数字。
+   若要让热区真正做到 ≥44×44，把这里的 -14px 改成 -16px 即可（12 + 16×2 = 44）；
+   代价是热区向外多伸 2 像素，两个节点挨得更近时更容易互相擦到，故本轮没改。 */
 .node .port::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
 .resize-handle::after { content: ""; position: absolute; inset: -17px; }
 .edge-handle::after { content: ""; position: absolute; inset: -15px; }

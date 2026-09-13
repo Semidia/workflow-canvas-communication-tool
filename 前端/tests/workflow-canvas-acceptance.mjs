@@ -43,12 +43,19 @@ expect(await page.locator(".node-marker").count() === initialNodes, "every node 
 const source = page.locator('.node[data-node-id="node-source"]');
 const sourceBox = await source.boundingBox();
 expect(Boolean(sourceBox), "source node is not visible");
+const sourceLeftBefore = await source.evaluate((element) => element.style.left);
 await page.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2);
 await page.mouse.down();
-await page.mouse.move(sourceBox.x + sourceBox.width / 2 + 90, sourceBox.y + sourceBox.height / 2 + 35);
+// 往下拖得多一点（原来只往下 35）。这一段只是要一个「节点被拖动过」的状态，但往下 35 会让
+// 「收集材料」正好压在「形成判断」那个菱形节点底下，它的尺寸控制点按钮就被上面那个节点盖住了。
+// 从 2026-09-13 起，端口/手柄/按钮的 z-index 只在各自节点内部比较（见 styles.css 里 .node 上
+// 那行 isolation: isolate），盖住就是点不中——这是对的，所以这里绕开重叠，而不是把断言放宽。
+await page.mouse.move(sourceBox.x + sourceBox.width / 2 + 80, sourceBox.y + sourceBox.height / 2 + 140);
 await page.mouse.up();
 const movedLeft = await source.evaluate((element) => element.style.left);
-expect(movedLeft !== "220px", "node drag did not change position");
+// 原来这里断言的是「不等于那个写死的 220px」——那个字符串跟默认位置的 50px 对不上，
+// 所以这条断言永远成立、等于没查。改成本次拖动前后比一比，才真的能发现「拖不动」。
+expect(movedLeft !== sourceLeftBefore, `拖动后节点位置应改变，实际仍是 ${movedLeft}`);
 
 await page.locator('.node[data-node-id="node-source"]').click();
 expect(await page.locator("#inspectorForm").isVisible(), "node inspector should open after node selection");

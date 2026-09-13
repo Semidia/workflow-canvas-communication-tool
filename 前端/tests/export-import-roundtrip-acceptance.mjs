@@ -68,6 +68,27 @@ async function shot(name) {
   await page.screenshot({ path: path.join(outDir, `${name}.png`) });
 }
 
+// 等提示条真的显示「这一次操作」的文案，再去断言。
+//
+// 为什么不能只 waitFor({ state: "visible" })：上一条消息还挂着的时候，提示条本来就是可见的，
+// waitFor 立刻返回，读到的还是上一条的文案。2026-09-13 批量跑时就撞上过这种假失败（当时读到
+// 的是上一条的提示，而要验的文案根本没出现）。等「文案」而不是等「可见」才是治本——每条只等
+// 自己那条消息，既不靠机器快慢，也不靠提示条多久消失：app.js 的 showToast 在 1900ms 后只是
+// 摘掉 is-visible，文字并不清空，所以「可见」压根不能代表「刚发生」。
+//
+// 残留局限（如实记下，不当成已解决）：若上一条提示的文案与这一次完全相同、且它还挂着，这里会
+// 立刻通过、等于没等。所以每处等完都紧跟状态断言（节点数 / 画布名 / 标签等），由状态兜底。
+async function waitToastContains(text, timeout = 15000) {
+  await page.waitForFunction(
+    (expected) => {
+      const el = document.querySelector("#toast");
+      return el !== null && el.classList.contains("is-visible") && (el.textContent || "").includes(expected);
+    },
+    text,
+    { timeout }
+  );
+}
+
 // ---------------------------------------------------------------- 0. 干净起步
 await page.goto(url);
 await page.waitForLoadState("networkidle");
@@ -97,7 +118,7 @@ note(`框选结果：${summary.trim()}`);
 await shot("01_框选全部");
 
 await page.locator('#multiSelectPanel [data-action="save-module"]').click();
-await page.locator("#toast").waitFor({ state: "visible" });
+await waitToastContains("已保存");
 expect((await toastText()).includes("已保存"), `封装模块应有成功提示，实际：「${await toastText()}」`);
 
 await openModuleModal();
@@ -117,6 +138,7 @@ await download.saveAs(exportPath);
 const exported = JSON.parse(fs.readFileSync(exportPath, "utf8"));
 const exportedKeys = Object.keys(exported).sort();
 note(`导出文件顶层字段：${JSON.stringify(exportedKeys)}`);
+await waitToastContains("已导出");
 expect((await toastText()).includes("已导出"), `导出应有成功提示，实际：「${await toastText()}」`);
 
 expect(exportedKeys.includes("canvases"), "导出文件里必须有 canvases");
@@ -143,7 +165,7 @@ const modifiedPath = path.join(outDir, "往返导入_改过一处.json");
 fs.writeFileSync(modifiedPath, JSON.stringify(modified, null, 2), "utf8");
 
 await page.locator("#importInput").setInputFiles(modifiedPath);
-await page.locator("#toast").waitFor({ state: "visible" });
+await waitToastContains("工作流已导入");
 expect((await toastText()).includes("工作流已导入"), `导入应有成功提示，实际：「${await toastText()}」`);
 await page.waitForTimeout(200);
 
@@ -173,7 +195,7 @@ await closeModuleModal();
 note(`★ 关键证据：清白环境里模块库为空（${modulesOnFreshMachine} 个），提示语「${emptyHint.trim().slice(0, 24)}…」`);
 
 await page.locator("#importInput").setInputFiles(modifiedPath);
-await page.locator("#toast").waitFor({ state: "visible" });
+await waitToastContains("工作流已导入");
 await page.waitForTimeout(200);
 expect(await nodeCount() === startNodes, `清白环境导入后节点数应为 ${startNodes}，实际 ${await nodeCount()}`);
 expect((await tabNames()).join(" ").includes("往返改过的画布名"), "清白环境导入后画布名应来自文件");
@@ -190,7 +212,7 @@ const beforeBadLabels = await nodeLabels();
 const junkPath = path.join(outDir, "坏文件_乱码.json");
 fs.writeFileSync(junkPath, '{"version": 1, "canvases": [ {"id": "x"', "utf8");
 await page.locator("#importInput").setInputFiles(junkPath);
-await page.locator("#toast").waitFor({ state: "visible" });
+await waitToastContains("导入失败");
 expect((await toastText()).includes("导入失败"), `乱码文件应提示导入失败，实际：「${await toastText()}」`);
 await shot("05_乱码文件被拒");
 expect(await nodeCount() === beforeBadCount, "乱码文件被拒后画布节点数不应变化");
@@ -199,14 +221,14 @@ expect(JSON.stringify(await nodeLabels()) === JSON.stringify(beforeBadLabels), "
 const shapePath = path.join(outDir, "坏文件_结构不对.json");
 fs.writeFileSync(shapePath, '{"版本": 2, "说明": "这压根不是工作流文件"}', "utf8");
 await page.locator("#importInput").setInputFiles(shapePath);
-await page.locator("#toast").waitFor({ state: "visible" });
+await waitToastContains("导入失败");
 expect((await toastText()).includes("导入失败"), `结构不对的文件应提示导入失败，实际：「${await toastText()}」`);
 expect(await nodeCount() === beforeBadCount, "结构不对的文件被拒后画布节点数不应变化");
 
 const emptyCanvasPath = path.join(outDir, "坏文件_空画布列表.json");
 fs.writeFileSync(emptyCanvasPath, '{"version": 1, "canvases": []}', "utf8");
 await page.locator("#importInput").setInputFiles(emptyCanvasPath);
-await page.locator("#toast").waitFor({ state: "visible" });
+await waitToastContains("导入失败");
 expect((await toastText()).includes("导入失败"), `空 canvases 应提示导入失败，实际：「${await toastText()}」`);
 expect(await nodeCount() === beforeBadCount, "空 canvases 被拒后画布节点数不应变化");
 note("三种坏文件（截断 JSON / 结构不对 / 空画布列表）都被拒，画布内容一处没动");

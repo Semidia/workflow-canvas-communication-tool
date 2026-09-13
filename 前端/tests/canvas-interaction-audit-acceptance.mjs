@@ -494,7 +494,12 @@ await fresh();
 {
   const id = (await nodes())[0].id;
   await settle();
-  await dragBy(id, 120, 60);
+  // 这里只需要「拖过一下」这个状态，所以**往下**拖、不往右下拖：默认布局里
+  // 「收集材料」往右下走 (+120,+60) 会正好压到「形成判断」那个菱形节点底下，
+  // 它的尺寸控制点按钮就被上面那个节点盖住了。
+  // 盖住了就点不中，这是对的（端口/手柄的 z-index 从 2026-09-13 起只在各自节点内部比较，
+  // 见 styles.css 里 .node 上那行 isolation: isolate）——用户看不见的按钮本来就不该抢点击。
+  await dragBy(id, 0, 150);
   await settle();
   await clickNode(id);
   await page.locator(`.node[data-node-id="${id}"] .resize-toggle`).click();

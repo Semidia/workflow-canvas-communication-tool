@@ -75,6 +75,20 @@ let failed = 0;
 // 保持从严（只要有 ❌、有 errors/pageErrors、或进程非 0 退出就算这条没绿）。
 const countBadStrings = (strings) => strings.filter((line) => line.includes("❌")).length;
 
+// 有些套件（如 multi-tab-sync）把每条断言写成 {name, pass, detail} 挂在汇总 JSON 里，
+// 只在 summary.failed 报个数字、不往 stdout 打失败那一条。这种「只报数不报哪条」的套件
+// 一旦在批量里偶发失败，日志里根本看不出输的是哪一条（2026-09-13 就撞上过：只看到
+// 「failed: 1」，看不到那一条的名字）。这里把带 pass:false / ok:false 的条目捞出来原样打印，
+// 免得下次还要靠反复重跑碰运气。纯读、不改判定。
+const collectFalseEntries = (value, out = []) => {
+  if (Array.isArray(value)) value.forEach((item) => collectFalseEntries(item, out));
+  else if (value && typeof value === "object") {
+    if (value.pass === false || value.ok === false) out.push(value);
+    Object.values(value).forEach((item) => collectFalseEntries(item, out));
+  }
+  return out;
+};
+
 for (const suite of suites) {
   const started = Date.now();
   const run = spawnSync(process.execPath, [join(here, suite), url], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
@@ -111,8 +125,9 @@ for (const suite of suites) {
       : badStrings.length;
   const errorCount = ["errors", "pageErrors"].reduce((sum, key) => sum + (parsed && Array.isArray(parsed[key]) ? parsed[key].length : 0), 0);
   const ok = run.status === 0 && failCount === 0 && errorCount === 0 && badStrings.length === 0;
+  const falseEntries = parsed ? collectFalseEntries(parsed) : [];
   if (!ok) failed += 1;
-  rows.push({ suite, ok, seconds, passCount, failCount, errorCount, failedItems: badStrings, declaredFailures: declaredFailures || [], tail: ok ? "" : out.trim().split("\n").slice(-12).join("\n") });
+  rows.push({ suite, ok, seconds, passCount, failCount, errorCount, failedItems: badStrings, declaredFailures: declaredFailures || [], falseEntries, tail: ok ? "" : out.trim().split("\n").slice(-12).join("\n") });
   console.log(`${ok ? "✅" : "❌"} ${suite}  ${seconds}s  通过=${passCount ?? "?"} 失败=${failCount} 报错=${errorCount}`);
 }
 
@@ -127,6 +142,10 @@ for (const row of rows.filter((r) => !r.ok)) {
   console.log(`—— ${row.suite} ——`);
   row.failedItems.forEach((line) => console.log(`  ${line}`));
   row.declaredFailures.forEach((line) => console.log(`  ${typeof line === "string" ? line : JSON.stringify(line)}`));
+  if (row.falseEntries.length) {
+    console.log(`  （下面是从汇总 JSON 里捞出来的失败条目：${row.falseEntries.length} 条）`);
+    row.falseEntries.forEach((entry) => console.log(`  ${JSON.stringify(entry)}`));
+  }
   if (row.tail) console.log(row.tail.split("\n").map((line) => `  | ${line}`).join("\n"));
 }
 process.exit(failed ? 1 : 0);
