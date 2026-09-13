@@ -1,16 +1,13 @@
-import { createRequire } from "node:module";
+import { launchChromium } from "./_runtime.mjs";
 import fs from "node:fs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 import { resolveCanvasUrl } from "./_served-target.mjs";
 const url = await resolveCanvasUrl(process.argv[2]);
 const screenshotDir = process.argv[3] || process.env.CANVAS_SHOT_DIR || "canvas-shots";
 fs.mkdirSync(screenshotDir, { recursive: true });
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 const errors = [];

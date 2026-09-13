@@ -234,6 +234,30 @@
       </footer>
     </div>
   </div>
+  <!-- 加载顺序 = 依赖顺序，别随手调换：
+       constants.js（常量与页面元素引用）
+       → storage.js（本机存储：草稿/模块库的读写）
+       → state.js（内存状态、规范化、撤销栈、写入门面）
+       → canvas.js（多画布、视图变换、缩放平移、状态条）
+       → node.js（画布上的节点：增删、尺寸、就地编辑、拖拽缩放）
+       → edge.js（画布上的连线：几何、端口、重接、渲染）
+       → inspector.js（右侧节点信息面板：读写与关系列表）
+       → ai-bridge.js（AI 快照、剪贴板、导入导出、右键菜单）
+       → modules.js（组合模块：封装、库、就地编辑、放置）
+       → marquee.js（框选、多选、选择集）
+       → app.js（核心装配函数：渲染、工具切换、撤销重做）
+       → events.js（事件绑定与启动引导，必须最后） -->
+  <script defer src="constants.js"></script>
+  <script defer src="storage.js"></script>
+  <script defer src="state.js"></script>
+  <script defer src="canvas.js"></script>
+  <script defer src="node.js"></script>
+  <script defer src="edge.js"></script>
+  <script defer src="inspector.js"></script>
+  <script defer src="ai-bridge.js"></script>
+  <script defer src="modules.js"></script>
+  <script defer src="marquee.js"></script>
   <script defer src="app.js"></script>
+  <script defer src="events.js"></script>
 </body>
 </html>
