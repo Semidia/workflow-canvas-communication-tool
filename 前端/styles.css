@@ -86,7 +86,8 @@ button { cursor: pointer; }
 .node-layer { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 /* isolation: isolate 是治本的一行，别删：端口、缩放手柄、缩放按钮都写了自己的 z-index（7/6/8），
    而 .node 自己不建层叠上下文，这些 z-index 就跑到「所有节点」这一层去比较了——结果是下面那个节点
-   的端口热区（见下方 .node .port::after，实测 40×40，dpr=1.25 时为 40.8）会盖在上面那个节点的本体上，按在上层节点
+   的端口热区（见下方 .node .port::after；发现这个缺陷时实测 40×40，2026-09-13 已按用户拍板收小到 28×28）
+   会盖在上面那个节点的本体上，按在上层节点
    看得见的内容上，却从下层节点拉出一条连线。加上 isolate 之后，这些 z-index 只在「自己这个节点内部」
    比较，命中就始终跟着「谁看得见在上面」走。注意：这一行只改「谁赢」，不改任何热区尺寸，手感不变。 */
 .node { position: absolute; isolation: isolate; width: 176px; min-height: 80px; display: flex; align-items: center; justify-content: center; padding: 12px 14px; border: 1px solid #aac2cd; border-top: 3px solid var(--accent); border-radius: 6px; color: var(--ink); background: var(--node); box-shadow: 0 8px 18px var(--shadow); pointer-events: auto; user-select: none; cursor: grab; touch-action: none; }
@@ -216,15 +217,27 @@ button { cursor: pointer; }
 .context-menu-item:disabled { color: #b7c4ca; cursor: default; }
 .context-menu-separator { height: 1px; margin: 4px 6px; background: var(--line); }
 /* 触摸命中区域放大（视觉尺寸不变，仅扩大可点范围）。
-   实测口径：端口 16px 是 border-box，内含 2px 边框 → padding box 只剩 12px，
-   ::after 的 inset 是相对 padding box 的，所以实际热区 = 12 + 14×2 = 40×40（半径 20 像素），
-   不是 44×44。这是 2026-09-13 用 getComputedStyle(port, "::after").width 实测的（得到 40px）。
-   补充：2026-09-13 在 devicePixelRatio=1.25 的真实 Chrome 上量到的是 40.8×40.8——浏览器会把
-   2px 边框按设备像素取整（2 × 1.25 = 2.5 取成 2 设备像素，计算值报 1.6px），于是 padding box
-   变成 12.8px。差值来自渲染取整、不来自这份 CSS，换台显示器就会变，别照它改数字。
-   若要让热区真正做到 ≥44×44，把这里的 -14px 改成 -16px 即可（12 + 16×2 = 44）；
-   代价是热区向外多伸 2 像素，两个节点挨得更近时更容易互相擦到，故本轮没改。 */
-.node .port::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
+   算口径：端口 16px 是 border-box，内含 2px 边框 → padding box 只剩 12px，::after 的 inset 是
+   相对 padding box 的，所以按样式算，热区 = 12 + 8×2 = 28×28（半径 14 像素）。
+   2026-09-13 分两处量同一份 CSS，读数不一样，但两个都是真的：
+     · 无头 Chrome（devicePixelRatio 报 1 与 1.25 各量一次）→ 28×28、半径 14，border 计算值 2px；
+     · 真实有头 Chrome 153（本机 Windows 125% 缩放）→ 28.8×28.8，border 计算值 1.6px，
+       逐像素实测半径 左 15、右/上/下各 14（极差 1）。同一个数在两条独立驱动链上各量到一次
+       （自建 Playwright 有头窗口、Playwright MCP 驱动的桌面 Chrome），所以 28.8 不是记错。
+   分水岭是 border 的**计算值**（真机 1.6px、padding box 12.8），**不是 devicePixelRatio**：
+   有头窗口那一次 dpr 报的是 1.0000000149011612，照样量到 1.6px 与 28.8。至于 1.6px 具体由
+   哪条取整路径算出，目前只实测到现象、没坐实机制，别把推测当结论写。
+   另一条要紧的是——用 deviceScaleFactor 模拟像素比**不会**触发真机这条取整路径（两次模拟都量到
+   整数 28），所以「换台机器热区会变成多少」只能在真机上量，别拿模拟值推断；命令已固化：
+   PORT_PROBE_HEADFUL=1 node tests/probe-port-geometry.mjs http://127.0.0.1:4192
+   验收断言里因此留了 ±2 的宽容度，正是为了容下这个 28.8。
+   沿革：2026-09-13 之前这里写的是 -14px（热区 40×40、半径 20 像素）。用户反馈「鼠标离端口中心
+   20 像素那么远、明明还在空白处，点下去也会开始拉连线」，于是先从三版可视化对比稿里挑定方向，
+   再收小到 -8px（无头环境 28×28，向外比看得见的圆点多伸 6 像素；真机 125% 缩放下约多伸 7 像素）。
+   可见圆点半径 8 像素，一个字没动。
+   要再改这个数字时，务必同步改 tests\port-hotspot-stacking-acceptance.mjs 里的几何断言，
+   否则会留下「注释一个数、断言另一个数」的假口径。 */
+.node .port::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; }
 .resize-handle::after { content: ""; position: absolute; inset: -17px; }
 .edge-handle::after { content: ""; position: absolute; inset: -15px; }
 .marquee { position: absolute; left: 0; top: 0; z-index: 4; border: 1px dashed var(--accent-strong); background: rgba(36, 127, 125, .08); pointer-events: none; }
