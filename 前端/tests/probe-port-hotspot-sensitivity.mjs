@@ -1,3 +1,4 @@
+import { launchChromium } from "./_runtime.mjs";
 // 端口热区层叠验收套件的「灵敏度自检」（探针，不是验收证据）
 //
 // 干什么：把本轮那个修复临时撤销（只往页面里加一条 `.node { isolation: auto !important }`，
@@ -10,13 +11,10 @@
 // 用法：
 //   node tests/probe-port-hotspot-sensitivity.mjs [http://127.0.0.1:4192]
 
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveCanvasUrl } from "./_served-target.mjs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 
 const url = await resolveCanvasUrl(process.argv[2]);
 const outDir = process.argv[3] || "D:/agent临时/画布端口热区验收-20260913";
@@ -42,9 +40,8 @@ const seedState = () => ({
   }],
 });
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 

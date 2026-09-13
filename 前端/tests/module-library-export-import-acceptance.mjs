@@ -1,3 +1,4 @@
+import { launchChromium } from "./_runtime.mjs";
 // 丙方案「模块库单独导出／导入」验收（真实浏览器 + 真实点击/上传/弹窗）
 //
 // 要解决的毛病：模块库只住在本机浏览器里（localStorage 的 workflow-canvas-module-library-v1），
@@ -12,13 +13,10 @@
 // 用法：
 //   node tests/module-library-export-import-acceptance.mjs [http://127.0.0.1:4192] [证据目录]
 
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveCanvasUrl } from "./_served-target.mjs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 
 const url = await resolveCanvasUrl(process.argv[2]);
 const outDir = process.argv[3] || "D:/agent临时/画布模块库验收-20260913";
@@ -59,9 +57,8 @@ const note = (message) => {
   console.log(`[记录] ${message}`);
 };
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 }, acceptDownloads: true });
 const errors = [];

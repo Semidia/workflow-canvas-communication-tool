@@ -1,8 +1,6 @@
+import { launchChromium } from "./_runtime.mjs";
 // 弄清「缩到最小宽度时高度为何是 93 而不是 92」。
-import { createRequire } from "node:module";
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
-const browser = await chromium.launch({ headless: true, executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+const browser = await launchChromium({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 await page.goto(process.argv[2] || "http://127.0.0.1:4192");
 await page.waitForLoadState("networkidle");

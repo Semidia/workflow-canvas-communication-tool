@@ -41,7 +41,12 @@ try {
 // 「日志里跑到倒数第二个套件就不动了」：其实那一行之后轮到的是它自己，卡死在等孙子。
 // 排除自己是治本（而不是加个「最大深度」护栏，那只是把无限递归变成有限递归）。
 const selfName = basename(fileURLToPath(import.meta.url));
-const suites = readdirSync(here).filter((name) => name.endsWith("-acceptance.mjs") && name !== selfName).sort();
+// 自动发现所有 *-acceptance.mjs（排除自己），另外把真实浏览器走查 walkthrough-core-path.mjs
+// 也显式纳入：它不以 -acceptance 结尾，但同样是「真实浏览器 + 真实输入事件」的验收，漏跑
+// 等于「走查没过却以为全过了」。manual-walkthrough.mjs 是有头 + slowMo 的手动走查，故意不进。
+const suites = readdirSync(here)
+  .filter((name) => (name.endsWith("-acceptance.mjs") && name !== selfName) || name === "walkthrough-core-path.mjs")
+  .sort();
 
 // 从套件输出里挑出最后一个完整 JSON 对象（各套件都在最后 console.log 一份汇总）。
 const lastJson = (text) => {

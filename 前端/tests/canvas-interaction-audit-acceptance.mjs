@@ -1,19 +1,16 @@
+import { launchChromium } from "./_runtime.mjs";
 // 第二轮子智能体审计 14 项的逐条复现验收（真实浏览器 + 真实鼠标/键盘）
 // 运行：node tests/canvas-interaction-audit-acceptance.mjs [url] [截图目录]
 // 目标地址：可用第一个参数指定；不指定则从 4173 起自动探测本仓库这一份前端服务。
-import { createRequire } from "node:module";
 import fs from "node:fs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 import { resolveCanvasUrl } from "./_served-target.mjs";
 const url = await resolveCanvasUrl(process.argv[2]);
 const screenshotDir = process.argv[3] || "D:/agent临时/郄的工作流画布沟通工具验收";
 fs.mkdirSync(screenshotDir, { recursive: true });
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 const errors = [];

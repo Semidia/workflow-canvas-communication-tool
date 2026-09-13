@@ -1,8 +1,6 @@
+import { launchChromium } from "./_runtime.mjs";
 // 画布工具 判断三态(是/否/未定) + 循环回边虚线 + 判断条件/退出循环条件 + port 方向记录 专项验收
-import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 const url = process.argv[2] || "http://127.0.0.1:4173/index.html";
 const shotDir = "D:/agent临时/郄的工作流画布沟通工具验收";
 const STORAGE_KEY = "workflow-canvas-communication-draft-v1";
@@ -24,7 +22,7 @@ const testState = {
   }],
 };
 
-const browser = await chromium.launch({ headless: true, executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+const browser = await launchChromium({ headless: true });
 const results = [];
 const check = (name, pass, detail = "") => results.push({ name, pass, detail });
 const pageErrors = [];

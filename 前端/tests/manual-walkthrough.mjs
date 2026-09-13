@@ -1,8 +1,6 @@
+import { launchChromium } from "./_runtime.mjs";
 // 手动走查：有头真实 Chrome，逐项点一遍连线系统 7 项，每步截图
-import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 const url = process.argv[2] || "http://127.0.0.1:4173/index.html";
 const shotDir = "D:/agent临时/郄的工作流画布沟通工具手动验收";
 const KEY = "workflow-canvas-communication-draft-v1";
@@ -21,10 +19,9 @@ const base = (edges = []) => ({
   }],
 });
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: false,
   slowMo: 180,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 let shot = 0;
 const snap = async (page, name) => {

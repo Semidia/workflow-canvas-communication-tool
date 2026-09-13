@@ -1,8 +1,6 @@
+import { launchChromium } from "./_runtime.mjs";
 // 探针：复现「删除连线」「port 拖拽连线」现状，定位根因
-import { createRequire } from "node:module";
 import { mkdirSync } from "node:fs";
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 const url = process.argv[2] || "http://127.0.0.1:4173/index.html";
 const shotDir = "D:/agent临时/郄的工作流画布沟通工具验收";
 const STORAGE_KEY = "workflow-canvas-communication-draft-v1";
@@ -21,7 +19,7 @@ const base = (edges = []) => ({
   }],
 });
 
-const browser = await chromium.launch({ headless: true, executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe" });
+const browser = await launchChromium({ headless: true });
 const pageErrors = [];
 const out = [];
 try {

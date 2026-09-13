@@ -1,3 +1,4 @@
+import { launchChromium } from "./_runtime.mjs";
 // 探针：量清楚端口的真实几何与可点范围（定位/出报告用，不是验收证据）
 //
 // 什么时候用它：怀疑「端口的可点范围到底有多大」「改了 ::after 的 inset 之后实际变成多大」
@@ -34,13 +35,10 @@
 //   （见上面那条），所以真机读数只能让真窗口量；开头的报告会另存为 端口热区几何报告_真机有头.json。
 // 说明：目标地址靠 _served-target.mjs「按 app.js 内容认人」解析，不会误跑到别处的副本上。
 
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveCanvasUrl } from "./_served-target.mjs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 
 const url = await resolveCanvasUrl(process.argv[2]);
 const outDir = process.argv[3] || "D:/agent临时/画布端口热区验收-20260913"; // 与 port-hotspot-stacking-acceptance.mjs 用同一个证据目录，免得一份证据散在两处
@@ -49,9 +47,8 @@ fs.mkdirSync(outDir, { recursive: true });
 const 指定DPR = Number(process.env.PORT_PROBE_DPR || 0) || null;
 // 有头模式：真机屏幕缩放下的边框取整只有在真窗口里才量得到（无头 + deviceScaleFactor 量不出来）。
 const 有头 = process.env.PORT_PROBE_HEADFUL === "1";
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: !有头,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
   ...(有头 ? { args: ["--window-size=1440,900", "--window-position=40,40"] } : {}),
 });
 const page = await browser.newPage({

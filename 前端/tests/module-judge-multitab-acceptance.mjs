@@ -1,3 +1,4 @@
+import { launchChromium } from "./_runtime.mjs";
 // 交叉场景验收：模块 × 判断分支/循环回边 × 多标签页。
 //
 // 为什么要单独一个套件：模块（封装/放置/就地编辑）是 B 线带来的功能，而判断三态
@@ -10,19 +11,15 @@
 //   python -m http.server 4192 --bind 127.0.0.1
 //   node tests/module-judge-multitab-acceptance.mjs http://127.0.0.1:4192
 
-import { createRequire } from "node:module";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 import { resolveCanvasUrl } from "./_served-target.mjs";
 const url = await resolveCanvasUrl(process.argv[2]);
 
 const STORAGE_KEY = "workflow-canvas-communication-draft-v1";
 const MODULE_KEY = "workflow-canvas-module-library-v1";
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 const errors = [];

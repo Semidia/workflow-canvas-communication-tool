@@ -1,3 +1,4 @@
+import { launchChromium } from "./_runtime.mjs";
 // 导出 / 导入 往返验收（真实浏览器 + 真实输入事件）
 //
 // 验四件事：
@@ -11,13 +12,10 @@
 //   node tests/export-import-roundtrip-acceptance.mjs [http://127.0.0.1:4173] [截图/证据目录]
 // 说明：目标是靠 _served-target.mjs「按 app.js 内容认人」解析出来的，不会误跑到别处的副本上。
 
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveCanvasUrl } from "./_served-target.mjs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 
 const url = await resolveCanvasUrl(process.argv[2]);
 const outDir = process.argv[3] || "D:/agent临时/画布导入导出验收-20260913";
@@ -34,9 +32,8 @@ const note = (message) => {
   console.log(`[记录] ${message}`);
 };
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 const errors = [];

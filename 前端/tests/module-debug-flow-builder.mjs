@@ -1,14 +1,11 @@
-import { createRequire } from "node:module";
+import { launchChromium } from "./_runtime.mjs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 import { resolveCanvasUrl } from "./_served-target.mjs";
 const url = await resolveCanvasUrl(process.argv[2]);
 const screenshotDir = "D:/agent临时/郄的工作流画布沟通工具验收";
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 const errors = [];

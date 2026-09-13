@@ -1,3 +1,4 @@
+import { launchChromium } from "./_runtime.mjs";
 // 连线「点第一下不管用」三处交互缺陷 修复验收（真实浏览器 + 真实输入事件）
 //
 // 来历：D:\agent临时\画布验收-真实浏览器-20260913\验收记录.md 证明了三个先于本轮就有的毛病
@@ -16,13 +17,10 @@
 //   node tests/edge-click-fix-acceptance.mjs [http://127.0.0.1:4192] [证据目录]
 // 说明：目标地址是靠 _served-target.mjs「按 app.js 内容认人」解析出来的，不会误跑到别处的副本上。
 
-import { createRequire } from "node:module";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveCanvasUrl } from "./_served-target.mjs";
 
-const require = createRequire("D:/nodejs/npm-global/package.json");
-const { chromium } = require("playwright");
 
 const url = await resolveCanvasUrl(process.argv[2]);
 const outDir = process.argv[3] || "D:/agent临时/画布交互修复验收-20260913";
@@ -62,9 +60,8 @@ const note = (message) => {
   console.log(`[记录] ${message}`);
 };
 
-const browser = await chromium.launch({
+const browser = await launchChromium({
   headless: true,
-  executablePath: "C:/Program Files/Google/Chrome/Application/chrome.exe",
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
 const errors = [];
