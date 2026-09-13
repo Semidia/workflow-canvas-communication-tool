@@ -36,6 +36,32 @@ const browser = await launchChromium({
   headless: true,
 });
 const page = await browser.newPage({ viewport: { width: 1440, height: 820 } });
+
+// 提示记录器：在页面每次加载「之前」就装好（addInitScript 随每次导航自动重跑，包括本文件里的 reload），
+// 把每一次真正弹出的提示原文按顺序记进 window.__toastLog，后面所有「等某条提示」都查这本账。
+//
+// 为什么不能当场等「#toast 上挂着 is-visible」：app.js 的 showToast 只把 is-visible 挂 1900ms，
+// 到点摘掉类名、文字并不清空。而调用方点完按钮之后往往还有别的活要干才轮到等待
+// （导出这一段要 saveAs 落盘、读文件、JSON.parse），机器一忙就可能超过这 1900ms，
+// 于是出现「文字明明写着「当前画布已导出」，却永远等不到」的假失败。
+// 2026-09-14 实测：在开始等待前空转 2500ms 可稳定复现该超时；机器空闲时同一套件 8.4s 跑完、29 条全绿。
+// 改成记账再断言，就与机器快慢无关，也不必去猜「等多久才够」。
+await page.addInitScript(() => {
+  window.__toastLog = [];
+  const toastOf = (node) => {
+    const el = node.nodeType === 1 ? node : node.parentElement;
+    return el?.closest?.("#toast") || null;
+  };
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      const toast = toastOf(mutation.target);
+      if (toast && toast.classList.contains("is-visible")) {
+        window.__toastLog.push((toast.textContent || "").trim());
+      }
+    }
+  }).observe(document, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class"] });
+});
+
 const errors = [];
 page.on("pageerror", (error) => errors.push(String(error)));
 
@@ -65,21 +91,19 @@ async function shot(name) {
   await page.screenshot({ path: path.join(outDir, `${name}.png`) });
 }
 
-// 等提示条真的显示「这一次操作」的文案，再去断言。
+// 等「这一次操作」的提示真的弹过 —— 查记录器账本上的最后一条，而不是看 #toast 此刻可不可见。
 //
 // 为什么不能只 waitFor({ state: "visible" })：上一条消息还挂着的时候，提示条本来就是可见的，
 // waitFor 立刻返回，读到的还是上一条的文案。2026-09-13 批量跑时就撞上过这种假失败（当时读到
-// 的是上一条的提示，而要验的文案根本没出现）。等「文案」而不是等「可见」才是治本——每条只等
-// 自己那条消息，既不靠机器快慢，也不靠提示条多久消失：app.js 的 showToast 在 1900ms 后只是
-// 摘掉 is-visible，文字并不清空，所以「可见」压根不能代表「刚发生」。
-//
-// 残留局限（如实记下，不当成已解决）：若上一条提示的文案与这一次完全相同、且它还挂着，这里会
-// 立刻通过、等于没等。所以每处等完都紧跟状态断言（节点数 / 画布名 / 标签等），由状态兜底。
+// 的是上一条的提示，而要验的文案根本没出现）。
+// 为什么也不能等「此刻可见 + 文案对得上」：showToast 只挂 1900ms 的 is-visible，机器一忙，
+// 等待开始得比它消失还晚，就永远等不到（见文件顶部记录器的说明，2026-09-14 已实测复现）。
+// 账本口径把这两条一起解决：只认「新弹出来的那一条」，快慢都不影响。
 async function waitToastContains(text, timeout = 15000) {
   await page.waitForFunction(
     (expected) => {
-      const el = document.querySelector("#toast");
-      return el !== null && el.classList.contains("is-visible") && (el.textContent || "").includes(expected);
+      const log = window.__toastLog || [];
+      return log.length > 0 && log[log.length - 1].includes(expected);
     },
     text,
     { timeout }
