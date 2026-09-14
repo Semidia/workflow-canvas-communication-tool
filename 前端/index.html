@@ -29,8 +29,9 @@
         <section class="topbar-group" aria-labelledby="edit-group-title">
           <h2 class="topbar-group-title" id="edit-group-title">编辑</h2>
           <div class="topbar-controls">
-            <button class="icon-button" data-action="undo" title="撤销（Ctrl+Z）" aria-label="撤销">↶</button>
-            <button class="icon-button" data-action="redo" title="重做（Ctrl+Y）" aria-label="重做">↷</button>
+            <button class="icon-button" data-action="undo" title="撤销上一步操作" aria-label="撤销">↶</button>
+            <button class="icon-button" data-action="redo" title="重做（回到撤销前）" aria-label="重做">↷</button>
+            <button class="icon-button" data-action="clear-canvas" title="清空当前画布（所有节点和连线，可撤销）" aria-label="清空当前画布">⌫</button>
           </div>
         </section>
         <section class="topbar-group" aria-labelledby="file-group-title">
@@ -40,8 +41,8 @@
               <span aria-hidden="true">↥</span> 导入
               <input id="importInput" type="file" accept="application/json,.json" hidden>
             </label>
-            <button class="text-button" data-action="export" title="导出工作流 JSON">导出</button>
-            <button class="primary-button" data-action="save" title="保存到本机浏览器">保存</button>
+            <button class="text-button" data-action="export" title="下载一份文件到电脑（备份或发给别人）">导出</button>
+            <button class="primary-button" data-action="save" title="保存到磁盘（正式保存，下次打开还在）">保存</button>
           </div>
         </section>
         <section class="topbar-group" aria-labelledby="module-group-title">
