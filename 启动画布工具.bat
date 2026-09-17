@@ -3,12 +3,14 @@ chcp 65001 >nul
 setlocal
 set "PWSH=C:\Program Files\PowerShell\7\pwsh.exe"
 if not exist "%PWSH%" (
-  echo 未找到 PowerShell 7，请先安装后再启动画布。
-  echo 可执行安装：winget install --id Microsoft.PowerShell
+  echo [ERROR] PowerShell 7 was not found.
+  echo [ERROR] Expected at: C:\Program Files\PowerShell\7\pwsh.exe
+  echo [ERROR] To install it, run:
+  echo [ERROR]     winget install --id Microsoft.PowerShell
   pause
   exit /b 1
 )
-"%PWSH%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0后端\启动画布工具.ps1" %*
+"%PWSH%" -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0launch.ps1" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" pause
 endlocal & exit /b %EXIT_CODE%
