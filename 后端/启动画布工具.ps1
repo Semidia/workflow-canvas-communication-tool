@@ -1,4 +1,4 @@
-# UTF-8
+﻿# UTF-8
 #requires -Version 7.0
 [CmdletBinding()]
 param(
