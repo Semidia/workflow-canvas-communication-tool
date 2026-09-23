@@ -24,10 +24,13 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 .app-shell { width: 100%; height: 100%; display: grid; grid-template-rows: var(--header-height) minmax(0, 1fr) var(--footer-height); }
 .topbar { display: flex; align-items: stretch; min-width: 0; padding: 0 15px 0 18px; background: var(--top); border-bottom: 1px solid var(--line); }
-.brand-block { width: 184px; flex: 0 0 184px; display: flex; align-items: center; gap: 10px; }
+.brand-block { width: 210px; flex: 0 0 210px; display: flex; align-items: center; gap: 10px; }
 .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; color: white; background: var(--accent-strong); border-radius: 6px; font-family: Georgia, serif; font-size: 16px; font-weight: 700; }
+.brand-text { min-width: 0; }
 .brand-title { font: 700 15px/1.1 Georgia, serif; letter-spacing: .03em; }
-.brand-caption { margin-top: 4px; color: var(--muted); font-size: 10px; }
+.brand-caption { margin-top: 3px; color: var(--muted); font-size: 10px; }
+/* 产品身份角标：设计沟通画布 ≠ 课堂/正式时间线画布——常显，别当装饰删掉 */
+.brand-badge { display: inline-block; margin-top: 4px; max-width: 100%; padding: 1px 6px; border: 1px solid rgba(217, 114, 75, .55); border-radius: 9px; color: #9a4f2f; background: #fff4ee; font-size: 9px; font-weight: 700; line-height: 1.35; letter-spacing: .02em; white-space: nowrap; }
 .topbar-groups { min-width: 0; flex: 1; display: flex; align-items: stretch; }
 .topbar-group { min-width: max-content; display: flex; flex-direction: column; justify-content: center; padding: 0 12px; border-left: 1px solid rgba(197, 214, 223, .72); }
 .topbar-group.canvas-group { min-width: 220px; flex: 1; }
@@ -123,6 +126,8 @@ button { cursor: pointer; }
 .node .port { position: absolute; z-index: 7; width: 16px; height: 16px; border: 2px solid white; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 2px 5px rgba(24, 49, 72, .2); opacity: 0; transition: opacity .12s ease, transform .12s ease; }
 .node:hover .port, .node.is-selected .port, .node.is-connecting .port { opacity: 1; }
 .canvas-viewport.is-connector .node .port { opacity: 1; }
+/* 连线拖拽中（从端口按下 / 拖端点重接）：所有节点四边/中点锚点全部可见，方便拖到即连；结束后由 is-linking 卸掉。 */
+.canvas-viewport.is-linking .node .port { opacity: 1; }
 .node .port:hover { transform: scale(1.25); background: var(--orange); }
 .port[data-side="top"] { top: -8px; left: calc(50% - 8px); }
 .port[data-side="right"] { right: -8px; top: calc(50% - 8px); }

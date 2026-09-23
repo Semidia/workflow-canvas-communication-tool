@@ -90,7 +90,7 @@ document.querySelector("#newCanvasButton")?.addEventListener("click", createCanv
   }
 })();
 document.querySelector(".statusbar")?.addEventListener("click", (e) => {
-  if (e.target.closest('[data-action="reload-disk"]')) { e.preventDefault(); loadFromDisk(); }
+  if (e.target.closest('[data-action="reload-disk"]')) { e.preventDefault(); cancelAutoReloadFromDisk?.(); loadFromDisk(); }
 });
 /* 启动：先静默对齐磁盘（草稿/交互中则保留），再启动真相轮询。 */
 Promise.resolve(loadFromDisk({ silent: true })).finally(() => {
