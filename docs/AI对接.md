@@ -1,4 +1,4 @@
-# AI 对接：本地 `/api/state`
+# AI 对接：本地 `/api/state` 与 `/api/modules`
 
 > 只服务本机 `127.0.0.1`，无鉴权、不上云。路径与示例全部 **ASCII**，便于脚本直接粘贴。
 
@@ -15,6 +15,8 @@
 | PATCH | `/api/state?canvasId=ID&nodeId=NID` | 同上 |
 | POST | `/api/state?canvasId=ID&edgeId=EID` | **单连线字段**合并 |
 | PATCH | `/api/state?canvasId=ID&edgeId=EID` | 同上 |
+| GET | `/api/modules` | 读模块库 `{ok, library, file, mtime, etag, size}`（无文件 → 404） |
+| POST | `/api/modules` | 写模块库 payload（`kind=workflow-canvas-module-library`），**不**并入画布数据.json |
 
 写成功响应统一为：
 
@@ -28,7 +30,21 @@
 
 ```text
 工作流导出/画布数据.json
+工作流导出/模块库.json
 ```
+
+模块库 payload（与浏览器「导出模块库」同形）：
+
+```json
+{
+  "kind": "workflow-canvas-module-library",
+  "version": 1,
+  "exportedAt": 0,
+  "modules": [ { "id": "…", "name": "…", "createdAt": 0, "nodes": [], "edges": [] } ]
+}
+```
+
+前端 `saveModules()`：先写 localStorage，再 **fire-and-forget** `POST /api/modules`（失败不打断 UI）。启动时若本地模块库为空且磁盘有稿，`restoreModulesFromDisk` 会恢复。**首版不做模块 ETag 轮询**；画布 `statePayloadForAI` / `画布数据.json` **仍不含** `modules`。
 
 ## curl
 
@@ -58,6 +74,14 @@ curl -sS -X PATCH "http://127.0.0.1:4173/api/state?canvasId=canvas-main&nodeId=n
 curl -sS -X PATCH "http://127.0.0.1:4173/api/state?canvasId=canvas-main&edgeId=edge-1" \
   -H "Content-Type: application/json" \
   -d '{"loop":true,"branch":"是"}'
+
+# 读模块库
+curl -sS http://127.0.0.1:4173/api/modules
+
+# 写模块库（独立文件，不碰画布数据.json）
+curl -sS -X POST http://127.0.0.1:4173/api/modules \
+  -H "Content-Type: application/json" \
+  --data-binary @modules.json
 ```
 
 ## Node
@@ -95,6 +119,23 @@ await fetch(
     body: JSON.stringify({ label: "核对材料", x: 120 }),
   }
 );
+
+// 读模块库（独立文件）
+const mr = await fetch("http://127.0.0.1:4173/api/modules");
+const mlib = await mr.json();
+console.log(mlib.ok, mlib.library?.modules?.length, mlib.file);
+
+// 写模块库
+await fetch("http://127.0.0.1:4173/api/modules", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    kind: "workflow-canvas-module-library",
+    version: 1,
+    exportedAt: Date.now(),
+    modules: [],
+  }),
+});
 ```
 
 ### 节点可合并字段
@@ -115,15 +156,23 @@ await fetch(
 - 仅 `name` / `category` / `view` → 字段合并
 - 目标 `canvasId` 不存在 → 创建新画布（upsert）
 
+### 模块库 body（`POST /api/modules`）
+
+- 必须 `kind === "workflow-canvas-module-library"` 且 `modules` 为数组
+- 条目至少含 `id` / `name` / 非空 `nodes`；`edges[].from|to` 必须落在该模块 `nodes` 内
+- 成功写入 `工作流导出/模块库.json`（原子替换 + `.bak`）；**不写** `画布数据.json`
+
 ## 约定
 
 - 页面每 4s 轮询 `?meta=1`：`etag` 变了 → 状态栏「磁盘已更新」+「磁盘已更新，点击重载」。
 - **本页干净**（无未保存草稿、无进行中手势）时，约 0.8s 后**自动重载**；有草稿则只提示一键重载，绝不静默覆盖。
 - 外部改盘时**不会**静默覆盖浏览器草稿；`persistToDiskSilent` 在 `diskOutOfSync` 时会先不写盘。
 - 校验：`ok === true` 且（读时）`state.canvases` 为非空数组。
+- 模块库：本地非空时**本地优先**（启动不覆盖）；本地空才从磁盘恢复。画布 ETag 轮询**不**覆盖模块。
 
 ## 自测
 
 ```bash
 python 后端/test_api_state.py
+python 后端/test_api_modules.py
 ```
