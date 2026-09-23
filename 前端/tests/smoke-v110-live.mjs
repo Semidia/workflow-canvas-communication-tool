@@ -20,6 +20,8 @@ const items = await page.locator(".context-menu-item").allTextContents();
 const hasCopyId = items.some((t) => t.includes("复制画布 ID"));
 const hasCopyIdName = items.some((t) => t.includes("复制画布 ID + 名称"));
 const firstIsCopyId = (items[0] || "").includes("复制画布 ID");
+// dismiss context menu so auto-reload path stays clean
+await page.keyboard.press("Escape");
 const reloadHidden = await page.locator("#reloadDiskButton").isHidden();
 
 const globalsOk = await page.evaluate(() => ({
@@ -27,12 +29,15 @@ const globalsOk = await page.evaluate(() => ({
   loadFromDisk: typeof loadFromDisk === "function",
   updateTruthStatus: typeof updateTruthStatus === "function",
   startDiskPoll: typeof startDiskPoll === "function",
+  cancelAutoReloadFromDisk: typeof cancelAutoReloadFromDisk === "function",
+  scheduleAutoReloadFromDisk: typeof scheduleAutoReloadFromDisk === "function",
 }));
 
 let metaHasEtag = false;
 let truthAfter = null;
 let reloadVisible = false;
-let truthAfterReload = null;
+let truthAfterAuto = null;
+let autoReloadApplied = false;
 // disk poll only exists against canvas_server (4173+). Static acceptance server returns 404.
 const hasApi = await page.evaluate(async () => {
   try {
@@ -48,24 +53,41 @@ if (hasApi) {
     (await (await fetch("/api/state?meta=1", { cache: "no-store" })).json())
   );
   metaHasEtag = !!meta1.etag;
+  // ensure page is aligned before external write
+  await page.evaluate(async () => {
+    await loadFromDisk({ silent: true, force: true });
+  });
   await page.evaluate(async () => {
     const data = await (await fetch("/api/state", { cache: "no-store" })).json();
     if (data.state.canvases[0]?.nodes?.[0]) {
       data.state.canvases[0].nodes[0].note = "smoke-" + Date.now();
     }
-    await fetch("/api/state", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data.state),
-    });
+    // fine-grained path also bumps mtime; full POST kept for compatibility coverage
+    const cid = data.state.canvases[0]?.id;
+    if (cid && data.state.canvases[0].nodes?.[0]) {
+      await fetch(`/api/state?canvasId=${encodeURIComponent(cid)}&nodeId=${encodeURIComponent(data.state.canvases[0].nodes[0].id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: data.state.canvases[0].nodes[0].note }),
+      });
+    } else {
+      await fetch("/api/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data.state),
+      });
+    }
     await pollDiskState();
   });
   truthAfter = await page.locator("#statusTruthText").textContent();
   reloadVisible = await page.locator("#reloadDiskButton").isVisible();
-  page.once("dialog", (d) => d.accept());
-  await page.locator("#reloadDiskButton").click();
-  await page.waitForTimeout(700);
-  truthAfterReload = await page.locator("#statusTruthText").textContent();
+  // clean page → auto-reload within DISK_AUTO_RELOAD_MS (800) + buffer
+  await page.waitForFunction(
+    () => document.querySelector("#statusTruthText")?.textContent === "磁盘已同步",
+    null,
+    { timeout: 3000 }
+  ).then(() => { autoReloadApplied = true; }).catch(() => { autoReloadApplied = false; });
+  truthAfterAuto = await page.locator("#statusTruthText").textContent();
 }
 
 // second clean load — no console errors
@@ -90,7 +112,8 @@ const result = {
   metaHasEtag,
   truthAfter,
   reloadVisible,
-  truthAfterReload,
+  truthAfterAuto,
+  autoReloadApplied,
   errors,
   errors2,
 };
@@ -105,4 +128,5 @@ const fail =
   errors2.length ||
   !Object.values(globalsOk).every(Boolean);
 if (fail) process.exit(1);
-if (hasApi && (!reloadVisible || !metaHasEtag || truthAfter !== "不一致")) process.exit(2);
+if (hasApi && (!metaHasEtag || truthAfter !== "磁盘已更新")) process.exit(2);
+if (hasApi && !autoReloadApplied) process.exit(3);

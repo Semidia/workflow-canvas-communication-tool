@@ -49,7 +49,7 @@ function aiIoMenuItems() { return [{ label: "从剪贴板粘贴 JSON 回写", ac
 function updateTruthStatus() {
   const syncMissing = lastDiskEtag === null;
   let truth = "draft", label = "浏览器草稿";
-  if (diskOutOfSync) { truth = "stale"; label = "不一致"; }
+  if (diskOutOfSync) { truth = "stale"; label = "磁盘已更新"; }
   else if (syncMissing) { truth = "draft"; label = "浏览器草稿"; }
   else if (!isDirty && !autosaveTimer && !editing) { truth = "synced"; label = "磁盘已同步"; }
   else { truth = "draft"; label = "浏览器草稿"; }
@@ -58,27 +58,52 @@ function updateTruthStatus() {
   if (reloadDiskButton) reloadDiskButton.hidden = !diskOutOfSync;
 }
 function noteDiskAligned(meta) {
+  clearTimeout(autoReloadDiskTimer);
+  autoReloadDiskTimer = null;
   if (meta && typeof meta.etag === "string") { lastDiskEtag = meta.etag; diskOutOfSync = false; }
   updateTruthStatus();
+}
+/* 自动重载窗口：仅本页干净（无未存草稿/无进行中手势）时才允许；
+   脏页保留「一键重载」，绝不静默覆盖浏览器草稿。 */
+function canAutoReloadDisk() {
+  return !isDirty && !autosaveTimer && !editing && !drag && !resizing && !pan
+    && !connecting && !reattaching && !marqueeDrag && !composing;
+}
+function cancelAutoReloadFromDisk() {
+  if (autoReloadDiskTimer) { clearTimeout(autoReloadDiskTimer); autoReloadDiskTimer = null; }
+}
+function scheduleAutoReloadFromDisk() {
+  cancelAutoReloadFromDisk();
+  if (!canAutoReloadDisk()) return;
+  autoReloadDiskTimer = setTimeout(() => {
+    autoReloadDiskTimer = null;
+    if (!diskOutOfSync || !canAutoReloadDisk()) return;
+    loadFromDisk({ silent: true, force: true }).then((ok) => {
+      if (ok) showToast("磁盘已更新，已自动重载");
+    });
+  }, DISK_AUTO_RELOAD_MS);
 }
 function noteDiskOutOfSync() {
   if (diskOutOfSync) return;
   diskOutOfSync = true;
   /* 不更新 lastDiskEtag：它记录「本页内容对齐的磁盘版本」，
-     若改成磁盘新 ETag，下一轮轮询会误判一致并清掉「不一致」。 */
+     若改成磁盘新 ETag，下一轮轮询会误判一致并清掉「磁盘已更新」。 */
   updateTruthStatus();
-  showToast("磁盘已更新，点击状态栏「磁盘已更新，点击重载」");
+  showToast(canAutoReloadDisk()
+    ? "磁盘已更新，稍后自动重载"
+    : "磁盘已更新，点击状态栏「磁盘已更新，点击重载」");
+  scheduleAutoReloadFromDisk();
 }
 async function pollDiskState() {
   try {
     const resp = await fetch("/api/state?meta=1", { cache: "no-store" });
-    if (resp.status === 404) { lastDiskEtag = null; diskOutOfSync = false; updateTruthStatus(); return; }
+    if (resp.status === 404) { lastDiskEtag = null; diskOutOfSync = false; cancelAutoReloadFromDisk(); updateTruthStatus(); return; }
     if (!resp.ok) return;
     const data = await resp.json().catch(() => null);
     if (!data || data.ok !== true) return;
     if (lastDiskEtag === null) { lastDiskEtag = data.etag || null; updateTruthStatus(); return; }
     if (data.etag && data.etag !== lastDiskEtag) noteDiskOutOfSync();
-    else if (data.etag === lastDiskEtag) { diskOutOfSync = false; updateTruthStatus(); }
+    else if (data.etag === lastDiskEtag) { diskOutOfSync = false; cancelAutoReloadFromDisk(); updateTruthStatus(); }
   } catch { /* 离线/服务未起：保持当前真相状态 */ }
 }
 function startDiskPoll() { if (diskPollTimer) return; pollDiskState(); diskPollTimer = setInterval(pollDiskState, DISK_POLL_MS); }
@@ -95,4 +120,4 @@ async function saveToDisk() { try { const resp = await fetch("/api/state", { met
    这样用户画了东西即使不点「保存到磁盘」也不会在下次打开时被磁盘旧数据盖掉。
    磁盘已被外部改过（diskOutOfSync）时先不静默覆盖，等用户点重载或显式保存。 */
 async function persistToDiskSilent() { try { if (diskOutOfSync) return false; const resp = await fetch("/api/state", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(statePayloadForAI()) }); const data = await resp.json().catch(() => ({})); if (resp.ok && data.ok === true) { noteDiskAligned(data); return true; } return false; } catch { return false; } }
-async function loadFromDisk(opts = {}) { try { const resp = await fetch("/api/state", { cache: "no-store" }); if (resp.status === 404) { if (!opts.silent) showToast("磁盘尚无保存文件"); lastDiskEtag = null; diskOutOfSync = false; updateTruthStatus(); return false; } const data = await resp.json().catch(() => ({})); if (!resp.ok || data.ok !== true) { if (!opts.silent) showToast(`从磁盘加载失败：${data.error || resp.status}`); return false; } const parsed = data.state; if (!parsed || !Array.isArray(parsed.canvases) || !parsed.canvases.length) { if (!opts.silent) showToast("磁盘文件里没有有效画布"); return false; } if (!opts.silent && !window.confirm("从磁盘加载将覆盖当前所有画布，是否继续？")) return false; if (opts.silent && (isDirty || autosaveTimer || editing || drag || resizing || pan || userTouched || diskOutOfSync)) return false; commitPendingEdit(); if (!opts.silent) pushHistory(); state = normalizeState(parsed); clearTransient(); if (opts.silent) { history = []; future = []; } noteDiskAligned(data); render(); saveLocal("已从磁盘加载"); if (!opts.silent) showToast("已从磁盘加载"); return true; } catch (err) { if (!opts.silent) showToast(`从磁盘加载失败：${err.message || err}`); return false; } }
+async function loadFromDisk(opts = {}) { try { const resp = await fetch("/api/state", { cache: "no-store" }); if (resp.status === 404) { if (!opts.silent) showToast("磁盘尚无保存文件"); lastDiskEtag = null; diskOutOfSync = false; updateTruthStatus(); return false; } const data = await resp.json().catch(() => ({})); if (!resp.ok || data.ok !== true) { if (!opts.silent) showToast(`从磁盘加载失败：${data.error || resp.status}`); return false; } const parsed = data.state; if (!parsed || !Array.isArray(parsed.canvases) || !parsed.canvases.length) { if (!opts.silent) showToast("磁盘文件里没有有效画布"); return false; } if (!opts.silent && !window.confirm("从磁盘加载将覆盖当前所有画布，是否继续？")) return false; /* force：磁盘变更后的自动重载——本页必须干净；跳过 userTouched/diskOutOfSync 门槛 */ if (opts.force && (isDirty || autosaveTimer || editing || drag || resizing || pan)) return false; if (opts.silent && !opts.force && (isDirty || autosaveTimer || editing || drag || resizing || pan || userTouched || diskOutOfSync)) return false; commitPendingEdit(); if (!opts.silent) pushHistory(); state = normalizeState(parsed); clearTransient(); if (opts.silent) { history = []; future = []; } noteDiskAligned(data); render(); saveLocal("已从磁盘加载"); if (!opts.silent) showToast("已从磁盘加载"); return true; } catch (err) { if (!opts.silent) showToast(`从磁盘加载失败：${err.message || err}`); return false; } }
