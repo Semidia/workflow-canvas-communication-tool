@@ -23,6 +23,9 @@
 let stateRev = 0, lastSeenRemoteRev = 0, draftUnreadable = false, state = loadState(), activeTool = "select", selectedNodeId = null, resizeModeNodeId = null, selectedEdgeId = null, connectorSourceId = null, history = [], future = [], drag = null, resizing = null, pan = null, connecting = null, reattaching = null, editing = null, inspectorEdit = null, toastTimer, autosaveTimer = null, isDirty = false;
 let dragCategorySourceId = null, composing = false, composingJustEnded = false, finishEditOnCompositionEnd = false, refocusNodeAfterEdit = false, clipboardNode = null, lastArrowMoveAt = 0, historyToken = 0, userTouched = false, pinch = null;
 let selectedNodeIds = new Set(), marqueeDrag = null, moduleLibrary = loadModules(), modulePlaceOffset = 0, lastModalTrigger = null, moduleEditing = null;
+/* 磁盘真相：lastDiskEtag 是本页最近一次与磁盘对齐时的 ETag；
+   diskOutOfSync 为 true 表示磁盘已被外部改过、等待用户点「重载」，绝不静默覆盖草稿。 */
+let lastDiskEtag = null, diskOutOfSync = false, diskPollTimer = null, lastLoopWarningShown = false;
 
 /* 连线第一下按在哪条线上（R10 修①的配套状态；读写见 app.js 的 edgeGroup pointerdown） */
 let edgePress = null;
