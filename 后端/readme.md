@@ -11,8 +11,10 @@
 
 - 静态文件：服务 `前端/` 下的 `index.html`、`app.js`、`styles.css` 等，并统一加 `Cache-Control: no-store`，避免开发期改完代码浏览器仍用旧缓存。
 - `/api/state`：
-  - `GET`：读取 `工作流导出/画布数据.json`，返回 `{ok, state, file}`。
-  - `POST`：把请求体（`{version, activeCanvasId, canvases}`）原子写入同一文件（先写 `.tmp` 再 `os.replace`）。
+  - `GET`：读取 `工作流导出/画布数据.json`，返回 `{ok, state, file, mtime, etag, size, mtimeIso}`。
+  - `GET ?meta=1`：只返回元数据（不含 `state`），供页面每 4s 轮询是否被外部改盘。
+  - `POST`：把请求体（`{version, activeCanvasId, canvases}`）原子写入同一文件（先写 `.tmp` 再 `os.replace`），响应同样带 `mtime/etag`。
+  - 示例见 `docs/AI对接.md`（ASCII 路径 curl/node）。
 - 用 `ThreadingHTTPServer`（不是单线程 `HTTPServer`），避免一个慢请求阻塞后续连接。
 
 这个落盘文件的用途是让本机 AI agent 能直接 `Read/Edit` 真实文件，再让页面「从磁盘加载」回写画布（类比 Codex 深度链接的定位文件）。它不是多用户服务，也没有鉴权，只绑定 `127.0.0.1` 本地回环。

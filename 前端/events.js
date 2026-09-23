@@ -29,7 +29,7 @@ document.querySelector(".topbar-groups").addEventListener("click", (e) => { cons
 document.querySelector(".statusbar").addEventListener("click", (e) => { const a = e.target.closest("[data-action]")?.dataset.action; if (a === "zoom-out") stepZoom("out"); if (a === "zoom-in") stepZoom("in"); if (a === "zoom-reset") resetView(); });
 canvasTabs.addEventListener("click", (e) => { const close = e.target.closest(".tab-close"), rename = e.target.closest(".tab-rename"), tab = e.target.closest(".canvas-tab"); if (!tab) return; if (close) return closeCanvas(tab.dataset.canvasId); if (rename) return renameCanvas(tab.dataset.canvasId); if (state.activeCanvasId === tab.dataset.canvasId) return; commitPendingEdit(); state.activeCanvasId = tab.dataset.canvasId; clearTransient(); render(); saveLocal(); });
 canvasTabs.addEventListener("dblclick", (e) => { const tab = e.target.closest(".canvas-tab"); if (tab && !e.target.closest(".tab-close")) renameCanvas(tab.dataset.canvasId); });
-canvasTabs.addEventListener("contextmenu", (e) => { e.preventDefault(); const tab = e.target.closest(".canvas-tab"); if (tab) { const id = tab.dataset.canvasId, c = state.canvases.find((x) => x.id === id); openContextMenu(e.clientX, e.clientY, [{ label: "重命名", action: () => renameCanvas(id) }, { label: c && c.category ? `设置分类（当前：${c.category}）` : "设置分类", action: () => setCategoryCanvas(id) }, { label: "导出此画布", action: () => { exportCanvases([c], c.name || "工作流", id); showToast("画布已导出"); } }, { label: "关闭画布", danger: true, disabled: state.canvases.length === 1, action: () => closeCanvas(id) }, { separator: true }, ...aiCanvasMenuItems(c), ...aiStateMenuItems(), ...aiIoMenuItems()]); } else { const chip = e.target.closest(".canvas-category"); openContextMenu(e.clientX, e.clientY, [{ label: chip ? `分类「${chip.dataset.category || "未分类"}」` : "标签栏", disabled: true }, { separator: true }, { label: "新建画布", action: () => createCanvas() }, { separator: true }, ...aiStateMenuItems(), ...aiIoMenuItems()]); } });
+canvasTabs.addEventListener("contextmenu", (e) => { e.preventDefault(); const tab = e.target.closest(".canvas-tab"); if (tab) { const id = tab.dataset.canvasId, c = state.canvases.find((x) => x.id === id); openContextMenu(e.clientX, e.clientY, [{ label: "复制画布 ID", action: () => copyText(id) }, { label: "复制画布 ID + 名称", action: () => copyText(`${id} · ${c?.name || ""}`) }, { separator: true }, { label: "重命名", action: () => renameCanvas(id) }, { label: c && c.category ? `设置分类（当前：${c.category}）` : "设置分类", action: () => setCategoryCanvas(id) }, { label: "导出此画布", action: () => { exportCanvases([c], c.name || "工作流", id); showToast("画布已导出"); } }, { label: "关闭画布", danger: true, disabled: state.canvases.length === 1, action: () => closeCanvas(id) }, { separator: true }, ...aiCanvasMenuItems(c), ...aiStateMenuItems(), ...aiIoMenuItems()]); } else { const chip = e.target.closest(".canvas-category"); openContextMenu(e.clientX, e.clientY, [{ label: chip ? `分类「${chip.dataset.category || "未分类"}」` : "标签栏", disabled: true }, { separator: true }, { label: "新建画布", action: () => createCanvas() }, { separator: true }, ...aiStateMenuItems(), ...aiIoMenuItems()]); } });
 canvasTabs.addEventListener("dragstart", (e) => { const tab = e.target.closest(".canvas-tab"); if (!tab || e.target.closest(".tab-close")) { e.preventDefault(); return; } dragCategorySourceId = tab.dataset.canvasId; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragCategorySourceId); });
 canvasTabs.addEventListener("dragover", (e) => { const key = dropCategoryKeyFromElement(e.target); if (key === null || !dragCategorySourceId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; document.querySelectorAll(".canvas-category").forEach((chip) => chip.classList.toggle("is-drop-target", (chip.dataset.category || "") === key)); });
 canvasTabs.addEventListener("drop", (e) => { const key = dropCategoryKeyFromElement(e.target); const id = dragCategorySourceId; dragCategorySourceId = null; document.querySelectorAll(".canvas-category.is-drop-target").forEach((el) => el.classList.remove("is-drop-target")); if (key === null || !id) return; e.preventDefault(); dragCategoryCanvas(id, key); });
@@ -79,4 +79,21 @@ viewport.addEventListener("contextmenu", (e) => { if (e.target.closest?.(".node"
 inspector.addEventListener("contextmenu", (e) => { if (e.target.closest?.("input, textarea, select")) return; e.preventDefault(); const canvas = activeCanvas(); openContextMenu(e.clientX, e.clientY, [...aiCanvasMenuItems(canvas), ...aiStateMenuItems(), ...aiIoMenuItems()]); });
 document.querySelector(".topbar").addEventListener("contextmenu", (e) => { if (e.target.closest("#canvasTabs")) return; e.preventDefault(); openContextMenu(e.clientX, e.clientY, [...aiStateMenuItems(), ...aiIoMenuItems()]); });
 document.querySelector("#newCanvasButton")?.addEventListener("click", createCanvas);
-loadFromDisk({ silent: true });
+/* 脚本加载顺序自检：关键全局函数缺失 = 某个 script 没加载上或顺序错了，立刻暴露而不是静默半残。 */
+(function assertCriticalScripts() {
+  const required = ["render", "loadFromDisk", "saveToDisk", "copyText", "showToast", "updateStatus", "activeCanvas", "updateTruthStatus", "startDiskPoll"];
+  const missing = required.filter((name) => typeof globalThis[name] !== "function");
+  if (missing.length) {
+    console.error("[画布工具] 脚本加载顺序自检失败，缺少：", missing);
+    try { showToast(`脚本加载异常：缺少 ${missing.join("、")}，请强刷 Ctrl+F5`); } catch { /* toast 不可用时只靠 console */ }
+    if (statusTruthText) { statusTruthText.textContent = "脚本异常"; statusTruthDot && (statusTruthDot.dataset.truth = "stale"); }
+  }
+})();
+document.querySelector(".statusbar")?.addEventListener("click", (e) => {
+  if (e.target.closest('[data-action="reload-disk"]')) { e.preventDefault(); loadFromDisk(); }
+});
+/* 启动：先静默对齐磁盘（草稿/交互中则保留），再启动真相轮询。 */
+Promise.resolve(loadFromDisk({ silent: true })).finally(() => {
+  updateTruthStatus?.();
+  startDiskPoll?.();
+});

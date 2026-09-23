@@ -187,8 +187,9 @@
               <span>循环回边（虚线显示）</span>
             </label>
           </div>
+          <p class="inspector-warning" id="loopExitWarning" role="alert" hidden></p>
           <button type="button" class="edge-delete-button" data-action="delete-edge">删除这条连线</button>
-          <p class="inspector-footnote">分支标签（是 / 否 / 未定）与连线名称相互独立，分别显示在连线旁；留空则不显示。循环回边为手动标记，仅以虚线提示，不参与自动执行。</p>
+          <p class="inspector-footnote">分支标签（是 / 否 / 未定）与连线名称相互独立，分别显示在连线旁；留空则不显示。循环回边为手动标记，仅以虚线提示，不参与自动执行；**何时结束循环**必须在相关判断（菱形）节点填写「退出循环条件」。</p>
         </form>
         <div class="multi-select-panel" id="multiSelectPanel" hidden>
           <p class="eyebrow">框选结果</p>
@@ -205,6 +206,12 @@
 
     <footer class="statusbar">
       <div class="status-group status-save"><span class="status-dot" id="statusDot"></span><span class="status-label">保存</span><span id="saveStatus" aria-live="polite">尚未保存</span></div>
+      <div class="status-group status-truth" id="statusTruthGroup" title="浏览器草稿 / 磁盘权威稿 是否一致">
+        <span class="status-truth-dot" id="statusTruthDot" data-truth="unknown"></span>
+        <span class="status-label">真相</span>
+        <span id="statusTruthText" aria-live="polite">—</span>
+        <button type="button" class="status-reload-button" id="reloadDiskButton" data-action="reload-disk" hidden>磁盘已更新，点击重载</button>
+      </div>
       <div class="status-group status-selection"><span class="status-label">选择</span><span id="selectionStatus" aria-live="polite">未选择节点</span></div>
       <div class="status-group zoom-controls" aria-label="缩放控制">
         <span class="status-label">缩放</span>

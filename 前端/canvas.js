@@ -40,7 +40,7 @@ function wheelZoomStep(e) { let deltaY = e.deltaY; if (e.deltaMode === 1) deltaY
 
 /* ---- 状态条 ---- */
 
-function updateStatus() { if (selectedNodeIds.size) { selectionStatus.textContent = `已框选 ${selectedNodeIds.size} 个节点`; selectionHint.hidden = true; return; } const node = activeCanvas().nodes.find((n) => n.id === selectedNodeId), edge = selectedEdgeId ? activeCanvas().edges.find((e) => e.id === selectedEdgeId) : null; selectionStatus.textContent = node ? `已选择：${node.label}` : edge ? ((edge.branch || edge.label) ? `已选择连线：${edge.branch || edge.label}` : "已选择：连线") : "未选择节点"; selectionHint.hidden = !node; if (node) selectionHint.textContent = `${node.label} · 点节点右上角的小图标，再拖四周的小方块改大小；拖边上小圆点来连线`; }
+function updateStatus() { if (selectedNodeIds.size) { selectionStatus.textContent = `已框选 ${selectedNodeIds.size} 个节点`; selectionHint.hidden = true; return; } const node = activeCanvas().nodes.find((n) => n.id === selectedNodeId), edge = selectedEdgeId ? activeCanvas().edges.find((e) => e.id === selectedEdgeId) : null; let base = node ? `已选择：${node.label}` : edge ? ((edge.branch || edge.label) ? `已选择连线：${edge.branch || edge.label}` : "已选择：连线") : "未选择节点"; const canvas = activeCanvas(); const missingExit = (canvas.edges || []).some((e) => e.loop && !loopExitConditionText(e, canvas).filled); if (missingExit) base += " · 循环回边未填写结束条件"; selectionStatus.textContent = base; selectionHint.hidden = !node; if (node) selectionHint.textContent = `${node.label} · 点节点右上角的小图标，再拖四周的小方块改大小；拖边上小圆点来连线`; }
 
 /* ---- 视口指针捕获的释放（R10 修②：捕获从不释放） ---- */
 

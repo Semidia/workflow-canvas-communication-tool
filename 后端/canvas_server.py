@@ -6,13 +6,15 @@
 2. 提供 /api/state 接口，把画布完整状态读写到「工作流导出/画布数据.json」，
    让本机 AI agent 能直接 Read/Edit 这个真实落盘文件（类比 Codex 深度链接的定位文件）。
 """
+import hashlib
 import json
 import os
 import shutil
 import sys
 import threading
+from datetime import datetime, timezone
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -60,6 +62,20 @@ class CanvasHandler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
+    def _state_meta(self):
+        """mtime/ETag 元数据：页面轮询用，判断磁盘是否被外部（AI/编辑器）改过。"""
+        st = os.stat(STATE_FILE)
+        mtime_ms = int(st.st_mtime * 1000)
+        with open(STATE_FILE, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()[:16]
+        etag = f'"{st.st_mtime_ns}-{st.st_size}-{digest}"'
+        return {
+            "mtime": mtime_ms,
+            "mtimeIso": datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).isoformat(),
+            "etag": etag,
+            "size": st.st_size,
+        }
+
     def do_GET(self):
         if self._is_api():
             if not self._is_local_request():
@@ -68,14 +84,21 @@ class CanvasHandler(SimpleHTTPRequestHandler):
                 return self._send_json(
                     {"ok": False, "error": "尚无磁盘保存", "file": STATE_FILE}, 404
                 )
+            parsed_path = urlparse(self.path)
+            want_meta = parse_qs(parsed_path.query).get("meta", [""])[0] in ("1", "true", "yes")
             try:
+                meta = self._state_meta()
+                if want_meta:
+                    return self._send_json({"ok": True, "file": STATE_FILE, **meta})
                 with open(STATE_FILE, "r", encoding="utf-8-sig") as f:
                     data = json.load(f)
             except (OSError, ValueError) as exc:
                 return self._send_json(
                     {"ok": False, "error": f"读取磁盘文件失败：{exc}", "file": STATE_FILE}, 500
                 )
-            return self._send_json({"ok": True, "state": data, "file": STATE_FILE})
+            return self._send_json(
+                {"ok": True, "state": data, "file": STATE_FILE, **meta}
+            )
         return super().do_GET()
 
     def do_POST(self):
@@ -124,7 +147,11 @@ class CanvasHandler(SimpleHTTPRequestHandler):
                     os.remove(tmp)
                 except OSError:
                     pass
-        return self._send_json({"ok": True, "file": STATE_FILE})
+        try:
+            meta = self._state_meta()
+        except OSError:
+            meta = {}
+        return self._send_json({"ok": True, "file": STATE_FILE, **meta})
 
 
 def main():

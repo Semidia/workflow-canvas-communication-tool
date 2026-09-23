@@ -202,9 +202,19 @@ button { cursor: pointer; }
 .edge-handle { position: absolute; z-index: 9; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 1px var(--orange), 0 2px 5px rgba(24,49,72,.25); pointer-events: auto; cursor: crosshair; }
 .edge-handle:hover { transform: scale(1.25); }
 .inspector-footnote { margin: 18px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: #8999a1; font-size: 9px; line-height: 1.55; }
-.statusbar { display: flex; align-items: center; gap: 20px; padding: 0 13px 0 15px; border-top: 1px solid var(--line); color: var(--muted); background: var(--top); font-size: 10px; }
+.inspector-warning { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #e3b3a3; border-radius: 4px; color: #b5483f; background: #fdf1ee; font-size: 11px; line-height: 1.45; }
+.statusbar { display: flex; align-items: center; gap: 16px; padding: 0 13px 0 15px; border-top: 1px solid var(--line); color: var(--muted); background: var(--top); font-size: 10px; }
 .status-group { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.status-save { min-width: 180px; }
+.status-save { min-width: 150px; }
+.status-truth { min-width: 0; }
+.status-truth-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #9aaab1; }
+.status-truth-dot[data-truth="draft"] { background: var(--orange); }
+.status-truth-dot[data-truth="synced"] { background: var(--accent); }
+.status-truth-dot[data-truth="stale"] { background: #b5483f; }
+.status-truth-dot[data-truth="loop-warn"] { background: #c79a2e; }
+.status-truth-dot[data-truth="unknown"] { background: #9aaab1; }
+.status-reload-button { height: 22px; padding: 0 8px; border: 1px solid var(--orange); border-radius: 4px; color: #b5483f; background: #fdf1ee; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.status-reload-button:hover { background: #f9e2dc; border-color: #d98a76; }
 .status-selection { flex: 1; }
 .status-label { color: #8a9aa2; font-size: 9px; font-weight: 700; letter-spacing: .08em; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
