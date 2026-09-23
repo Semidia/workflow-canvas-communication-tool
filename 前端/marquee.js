@@ -34,4 +34,4 @@ function clearMultiSelect() { selectedNodeIds = new Set(); render(); updateStatu
 /* ---- currentSelectionNodeIds（自 B 线移植） ---- */
 function currentSelectionNodeIds() { if (selectedNodeIds.size) return [...selectedNodeIds]; if (selectedNodeId) return [selectedNodeId]; return []; }
 /* ---- resetSelection（自 B 线移植） ---- */
-function resetSelection() { selectedNodeId = null; resizeModeNodeId = null; selectedEdgeId = null; connectorSourceId = null; selectedNodeIds = new Set(); connecting = null; temporaryEdge.setAttribute("hidden", ""); }
+function resetSelection() { selectedNodeId = null; resizeModeNodeId = null; selectedEdgeId = null; connectorSourceId = null; selectedNodeIds = new Set(); connecting = null; temporaryEdge.setAttribute("hidden", ""); if (typeof syncLinkingPorts === "function") syncLinkingPorts(); }
