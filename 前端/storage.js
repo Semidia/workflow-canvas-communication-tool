@@ -51,5 +51,36 @@ function loadModules() { try { const raw = localStorage.getItem(MODULE_STORAGE_K
 /* ---- normalizeModule（自 B 线移植） ---- */
 function normalizeModule(m) { if (!m || typeof m.id !== "string" || typeof m.name !== "string") return null; const nodes = Array.isArray(m.nodes) ? m.nodes.map(normalizeNode).filter(Boolean) : []; if (!nodes.length) return null; const ids = new Set(nodes.map((n) => n.id)); const edges = Array.isArray(m.edges) ? m.edges.filter((e) => e && ids.has(e.from) && ids.has(e.to)).map((e) => ({ from: e.from, to: e.to, ...normalizeEdgeFields(e) })) : []; return { id: m.id, name: m.name.trim() || "未命名模块", createdAt: m.createdAt, nodes, edges }; }
 
-/* ---- saveModules（自 B 线移植） ---- */
-function saveModules() { try { localStorage.setItem(MODULE_STORAGE_KEY, JSON.stringify(moduleLibrary)); } catch {} }
+/* ---- saveModules（localStorage 草稿 + fire-and-forget 镜像 工作流导出/模块库.json） ----
+   localStorage 仍是即时权威草稿；POST /api/modules 失败不打断 UI（与 persistToDiskSilent 同风格）。 */
+function saveModules() {
+  try { localStorage.setItem(MODULE_STORAGE_KEY, JSON.stringify(moduleLibrary)); } catch { }
+  try {
+    const payload = typeof moduleLibraryPayload === "function"
+      ? moduleLibraryPayload()
+      : { kind: MODULE_FILE_KIND, version: 1, exportedAt: Date.now(), modules: moduleLibrary };
+    fetch("/api/modules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(() => { });
+  } catch { }
+}
+
+/* ---- restoreModulesFromDisk（启动可选恢复：本地空且磁盘有稿 → 写回 localStorage） ----
+   首版本地优先：本地已有模块时不覆盖；不做 ETag 轮询。 */
+async function restoreModulesFromDisk() {
+  if (moduleLibrary.length) return false;
+  try {
+    const resp = await fetch("/api/modules", { cache: "no-store" });
+    if (resp.status === 404 || !resp.ok) return false;
+    const data = await resp.json().catch(() => null);
+    if (!data || data.ok !== true || !data.library || !Array.isArray(data.library.modules)) return false;
+    const restored = data.library.modules.map(normalizeModule).filter(Boolean);
+    if (!restored.length) return false;
+    moduleLibrary = restored;
+    try { localStorage.setItem(MODULE_STORAGE_KEY, JSON.stringify(moduleLibrary)); } catch { }
+    if (typeof renderModules === "function") renderModules();
+    return true;
+  } catch { return false; }
+}

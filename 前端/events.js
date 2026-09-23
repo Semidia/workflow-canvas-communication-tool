@@ -81,7 +81,7 @@ document.querySelector(".topbar").addEventListener("contextmenu", (e) => { if (e
 document.querySelector("#newCanvasButton")?.addEventListener("click", createCanvas);
 /* 脚本加载顺序自检：关键全局函数缺失 = 某个 script 没加载上或顺序错了，立刻暴露而不是静默半残。 */
 (function assertCriticalScripts() {
-  const required = ["render", "loadFromDisk", "saveToDisk", "copyText", "showToast", "updateStatus", "activeCanvas", "updateTruthStatus", "startDiskPoll"];
+  const required = ["render", "loadFromDisk", "saveToDisk", "copyText", "showToast", "updateStatus", "activeCanvas", "updateTruthStatus", "startDiskPoll", "saveModules", "restoreModulesFromDisk"];
   const missing = required.filter((name) => typeof globalThis[name] !== "function");
   if (missing.length) {
     console.error("[画布工具] 脚本加载顺序自检失败，缺少：", missing);
@@ -92,8 +92,10 @@ document.querySelector("#newCanvasButton")?.addEventListener("click", createCanv
 document.querySelector(".statusbar")?.addEventListener("click", (e) => {
   if (e.target.closest('[data-action="reload-disk"]')) { e.preventDefault(); cancelAutoReloadFromDisk?.(); loadFromDisk(); }
 });
-/* 启动：先静默对齐磁盘（草稿/交互中则保留），再启动真相轮询。 */
-Promise.resolve(loadFromDisk({ silent: true })).finally(() => {
-  updateTruthStatus?.();
-  startDiskPoll?.();
-});
+/* 启动：先静默对齐画布磁盘（草稿/交互中则保留），再尝试从磁盘恢复空的模块库，最后启动真相轮询。 */
+Promise.resolve(loadFromDisk({ silent: true }))
+  .then(() => restoreModulesFromDisk?.())
+  .finally(() => {
+    updateTruthStatus?.();
+    startDiskPoll?.();
+  });
