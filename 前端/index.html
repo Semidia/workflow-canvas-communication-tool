@@ -38,6 +38,7 @@
         <section class="topbar-group" aria-labelledby="file-group-title">
           <h2 class="topbar-group-title" id="file-group-title">文件</h2>
           <div class="topbar-controls">
+            <button class="text-button" data-action="open-saved" title="打开本机保存过的画布，关掉页面后也能从这里找回">已保存页面</button>
             <label class="file-button" title="导入工作流 JSON">
               <span aria-hidden="true">↥</span> 导入
               <input id="importInput" type="file" accept="application/json,.json" hidden>
@@ -223,6 +224,25 @@
     </footer>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-backdrop" id="savedPagesModal" hidden>
+    <div class="modal saved-pages-modal" role="dialog" aria-modal="true" aria-labelledby="savedPagesModalTitle">
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">本机保存</p>
+          <h2 id="savedPagesModalTitle">已保存页面</h2>
+        </div>
+        <button class="modal-close" type="button" data-action="close-saved-pages" title="关闭已保存页面列表" aria-label="关闭已保存页面列表">×</button>
+      </header>
+      <div class="saved-pages-toolbar" aria-live="polite">
+        <span id="savedPagesMeta">正在读取…</span>
+        <button class="text-button" type="button" data-action="reload-saved-pages" title="重新读取本机保存的画布">刷新</button>
+      </div>
+      <div class="saved-pages-list" id="savedPagesList"></div>
+      <footer class="modal-footer">
+        <p class="module-footnote">这里列出本机保存过的画布。点一个名字，就切回那个画布继续画。</p>
+      </footer>
+    </div>
+  </div>
   <div class="modal-backdrop" id="moduleModal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="moduleModalTitle">
       <header class="modal-header">
