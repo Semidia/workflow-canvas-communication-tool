@@ -17,7 +17,6 @@
 | **[使用说明.md](使用说明.md)** | 使用者：怎么开、怎么画、怎么和 AI 配合 |
 | **[docs/架构说明.md](docs/架构说明.md)** | 开发者：分层、模块加载、数据契约 |
 | **[docs/AI对接.md](docs/AI对接.md)** | AI/脚本：`/api/state` curl·node 示例 |
-| [docs/组合模块开发汇报.md](docs/组合模块开发汇报.md) | 模块封装/编辑功能说明 |
 | [前端/readme.md](前端/readme.md) | 编辑器交互与右键 AI 菜单 |
 | [后端/readme.md](后端/readme.md) | 本地薄后端与 `/api/state` |
 
