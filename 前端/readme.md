@@ -44,11 +44,22 @@
 
 ## 文件说明
 
-- `index.html`：页面结构。
-- `styles.css`：版本五的设计沟通画布视觉样式。
-- `app.js`：画布交互和本地数据处理。
-- `草图`：之前用于比较方向的静态草图，不是正式编辑器入口。
-- `tests\\workflow-canvas-acceptance.mjs`：本体功能和缩放边界检查。
+前端脚本按 `index.html` 里的加载顺序拆分，顺序即依赖：
+
+- `constants.js`：常量、节点类型、DOM 元素引用。
+- `storage.js`：localStorage 草稿、模块库、字段契约。
+- `state.js`：内存状态、画布规范化、撤销重做栈、写入门面。
+- `canvas.js`：多画布页签、视图变换、缩放平移、状态条。
+- `node.js`：节点增删、尺寸、就地编辑、拖拽缩放。
+- `edge.js`：连线几何、端口、重接、渲染。
+- `inspector.js`：右侧节点信息面板。
+- `ai-bridge.js`：AI 快照、剪贴板、导入导出、右键菜单、磁盘读写、已保存页面。
+- `modules.js`：组合模块的封装、库、就地编辑、放置。
+- `marquee.js`：框选、多选、选择集。
+- `app.js`：核心装配函数。
+- `events.js`：事件绑定与启动引导，必须最后加载。
+- `草图`：早期静态方向稿，不是正式编辑器入口。
+- `tests\workflow-canvas-acceptance.mjs`：本体功能和缩放边界检查。
 
 启动台、目录分工和后端边界请看上一级的 `readme.md`。
 

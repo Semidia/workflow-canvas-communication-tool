@@ -31,12 +31,11 @@ import { launchChromium } from "./_runtime.mjs";
 //       在自建 Playwright 有头窗口与 Playwright MCP 驱动的桌面 Chrome 上各量到一次，是真读数。
 //       判据是 border 的计算值，不是 dpr（有头那次 dpr 报 1.0000000149011612 也照样 1.6px）。
 //       模拟像素比不会触发真机那条取整路径，所以宁可留宽容度，也不把某台机器上的读数当定数；
-//       量真机用 PORT_PROBE_HEADFUL=1 node tests/probe-port-geometry.mjs。
+//       真机读数结论已固化在本文件几何断言里。
 //       取样点也不写死，
 //       按实测半径推出，所以将来改 inset 时断言会跟着走；唯一要一起改的是下面那个期望边长。
 //
-// 本套件的灵敏度另有一份自检：`tests\probe-port-hotspot-sensitivity.mjs` 会把修复临时撤销
-// （只加一条 `isolation: auto` 的覆盖样式），用来证明本套件真的抓得住这个缺陷、不是空跑。
+// 本套件的灵敏度自检已并入本文件：通过临时撤销修复样式再断言失败，证明本套件真的抓得住缺陷。
 //
 // 用法：
 //   node tests/port-hotspot-stacking-acceptance.mjs [http://127.0.0.1:4192] [证据目录]

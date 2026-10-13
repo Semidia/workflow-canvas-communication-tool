@@ -43,7 +43,7 @@ try {
 const selfName = basename(fileURLToPath(import.meta.url));
 // 自动发现所有 *-acceptance.mjs（排除自己），另外把真实浏览器走查 walkthrough-core-path.mjs
 // 也显式纳入：它不以 -acceptance 结尾，但同样是「真实浏览器 + 真实输入事件」的验收，漏跑
-// 等于「走查没过却以为全过了」。manual-walkthrough.mjs 是有头 + slowMo 的手动走查，故意不进。
+// 等于「走查没过却以为全过了」。有头 + slowMo 的手动走查不纳入自动入口，需人工时单独跑。
 const suites = readdirSync(here)
   .filter((name) => (name.endsWith("-acceptance.mjs") && name !== selfName) || name === "walkthrough-core-path.mjs")
   .sort();

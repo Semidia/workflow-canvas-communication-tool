@@ -90,7 +90,7 @@ await page.mouse.up();
 const minimumWidth = Number.parseFloat(await page.locator('.node[data-node-id="node-source"]').evaluate((element) => element.style.width));
 const minimumHeight = Number.parseFloat(await page.locator('.node[data-node-id="node-source"]').evaluate((element) => element.style.minHeight));
 // 高度下限不是写死的 92，而是 max(类型最小高度 92, 内容自然高度)。
-// 实测（probe-minheight.mjs）：document 节点「收集材料 / 已决定」这一套内容，
+// 实测：document 节点「收集材料 / 已决定」这一套内容，
 // 上下内边距各 12px + 标签 18px + 标记 17px + 行距，自然高度就是 93px，与宽度无关
 // （176/140/120 三档都是 93）。也就是说 NODE_MIN_SIZES.document.h = 92 这个常量
 // 天生比内容矮 1px、永远够不着，真正生效的是内容高度 93。产品取 93 是对的：

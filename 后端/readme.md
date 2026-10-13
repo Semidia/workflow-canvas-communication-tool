@@ -7,6 +7,7 @@
 - `启动画布工具.ps1`：由上一级的 `启动画布工具.bat` 调用，启动本地 HTTP 服务（**唯一正式入口是根目录的 bat**，不要直接开 `前端\index.html`）。若默认端口被其他程序占用，会自动尝试下一个端口；若检测到已经运行的画布，会询问“终止并重启”或“打开现有画布”。
 - `canvas_server.py`：本地薄后端。在 `前端` 目录上提供静态文件（替代 `python -m http.server`），并额外提供 `/api/state` 接口，把画布状态读写到 `工作流导出/画布数据.json`（整包 POST + 按 `canvasId`/`nodeId`/`edgeId` 的细粒度 POST/PATCH）。
 - `test_api_state.py`：临时目录起服务的 API 自测（整包兼容、单画布、单节点、单连线、并发）。
+- `test_api_modules.py`：临时目录起服务的模块库 API 自测（404/POST/GET/校验/独立文件/etag 不变/跨源拒绝）。
 
 ## canvas_server.py 做了什么
 
