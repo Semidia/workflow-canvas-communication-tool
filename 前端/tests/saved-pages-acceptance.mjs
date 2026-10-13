@@ -47,6 +47,13 @@ expect(activeAfter === addedId, `点击已保存页面后应切到该画布，�
 expect(activeBefore !== activeAfter, "点击不同画布应改变当前画布");
 expect(await page.locator("#savedPagesModal").isHidden(), "点击列表项后应关闭弹层");
 
+await page.locator('[data-action="open-saved"]').click();
+await page.waitForTimeout(100);
+expect(await page.locator("#savedPagesModal").isVisible(), "再次点击应重新打开已保存页面弹层");
+await page.keyboard.press("Escape");
+await page.waitForTimeout(100);
+expect(await page.locator("#savedPagesModal").isHidden(), "按 Escape 应关闭已保存页面弹层");
+
 // 只读静态服务下 /api/state 为 404，入口必须能降级为当前本机列表，不报页面异常。
 expect(errors.length === 0, `页面不应有未捕获异常：${errors.join("、")}`);
 

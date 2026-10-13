@@ -161,6 +161,7 @@ await fetch("http://127.0.0.1:4173/api/modules", {
 - 必须 `kind === "workflow-canvas-module-library"` 且 `modules` 为数组
 - 条目至少含 `id` / `name` / 非空 `nodes`；`edges[].from|to` 必须落在该模块 `nodes` 内
 - 成功写入 `工作流导出/模块库.json`（原子替换 + `.bak`）；**不写** `画布数据.json`
+- `/api/state` 每次写 `工作流导出/画布数据.json` 也是原子替换 + 自动保留一份 `画布数据.json.bak`；`.bak` 属于运行自产备份，不是正式数据文件
 
 ## 约定
 
