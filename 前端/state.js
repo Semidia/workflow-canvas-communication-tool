@@ -26,6 +26,8 @@ let selectedNodeIds = new Set(), marqueeDrag = null, moduleLibrary = loadModules
 /* 磁盘真相：lastDiskEtag 是本页最近一次与磁盘对齐时的 ETag；
    diskOutOfSync 为 true 表示磁盘已被外部改过、等待用户点「重载」，绝不静默覆盖草稿。 */
 let lastDiskEtag = null, diskOutOfSync = false, diskPollTimer = null, autoReloadDiskTimer = null, lastLoopWarningShown = false;
+/* 磁盘对齐标记：true 表示当前内存状态与磁盘 ETag 已对齐；本地草稿编辑后变 false。 */
+let diskAlignedRev = false;
 
 /* 连线第一下按在哪条线上（R10 修①的配套状态；读写见 app.js 的 edgeGroup pointerdown） */
 let edgePress = null;
