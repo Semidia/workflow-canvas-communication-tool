@@ -27,6 +27,9 @@ const DISK_AUTO_RELOAD_MS = 800;
 const MAX_CANVASES = 100;
 const MAX_NODES_PER_CANVAS = 1000;
 const MAX_EDGES_PER_CANVAS = 4000;
+/* 无限画布的虚拟世界幅面：不再限制 2400×1500，保留一个足够大的数值供渲染/放置使用。 */
+const WORLD_W = 100000;
+const WORLD_H = 100000;
 const DISCUSSION_MARKERS = ["待讨论", "已决定", "有疑问", "不采用"];
 const EDGE_WIDTHS = ["thin", "medium", "thick"];
 const EDGE_WIDTH_PX = { thin: 2.8, medium: 4, thick: 5.5 };

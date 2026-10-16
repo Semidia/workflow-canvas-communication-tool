@@ -32,7 +32,7 @@ function dropCategoryKeyFromElement(target) { const chip = target?.closest?.(".c
 /* ---- 视图变换与缩放平移 ---- */
 
 function renderTransform() { const view = activeCanvas().view || { zoom: 1, panX: 0, panY: 0 }; clampPan(view); surface.style.transform = `translate(${view.panX}px, ${view.panY}px) scale(${view.zoom})`; const pct = Math.round(view.zoom * 100); zoomValue.textContent = `${pct}%`; zoomValue.setAttribute("aria-label", `缩放 ${pct}%，点击恢复 100%`); }
-function clampPan(v) { const cw = viewport.clientWidth, ch = viewport.clientHeight, sw = 2400 * v.zoom, sh = 1500 * v.zoom; v.panX = sw <= cw ? (cw - sw) / 2 : clamp(v.panX, cw - sw, 0); v.panY = sh <= ch ? (ch - sh) / 2 : clamp(v.panY, ch - sh, 0); }
+function clampPan(v) { /* 无限画布：平移不夹在世界矩形内 */ }
 function changeZoom(next, cx = viewport.clientWidth / 2, cy = viewport.clientHeight / 2) { const c = activeCanvas(), v = c.view || { zoom: 1, panX: 0, panY: 0 }, before = { x: (cx - v.panX) / v.zoom, y: (cy - v.panY) / v.zoom }; v.zoom = clampZoom(next); v.panX = cx - before.x * v.zoom; v.panY = cy - before.y * v.zoom; clampPan(v); c.view = v; renderTransform(); markDirty(); }
 function stepZoom(direction) { const v = activeCanvas().view || { zoom: 1 }, isBelowFineThreshold = v.zoom < ZOOM_FINE_THRESHOLD - 1e-9; const delta = direction === "in" ? ZOOM_CLICK_IN : isBelowFineThreshold ? -ZOOM_CLICK_OUT_FINE : -ZOOM_CLICK_OUT_COARSE; changeZoom(v.zoom + delta); }
 function resetView() { const c = activeCanvas(); c.view = { zoom: 1, panX: 0, panY: 0 }; renderTransform(); markDirty(); }

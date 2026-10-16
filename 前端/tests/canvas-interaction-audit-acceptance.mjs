@@ -400,11 +400,11 @@ await fresh();
   await page.waitForLoadState("networkidle");
   const v = await view();
   const size = await page.evaluate(() => ({ cw: viewport.clientWidth, ch: viewport.clientHeight }));
-  const expectedPanX = (size.cw - 2400 * v.zoom) / 2, expectedPanY = (size.ch - 1500 * v.zoom) / 2;
+  const expectedPanX = (size.cw - WORLD_W * v.zoom) / 2, expectedPanY = (size.ch - WORLD_H * v.zoom) / 2;
   expect(v.panX === expectedPanX && v.panY === expectedPanY, `缩到放得下整张画布时应居中显示，期望 panX=${expectedPanX} panY=${expectedPanY}，实际 panX=${v.panX} panY=${v.panY}`);
   await fresh();
 
-  // 缩放到很大时，被读入的越界 pan 必须被夹回可视范围
+  // 无限画布：放大后读入的越界 pan 不再被夹回旧世界矩形，而是原样保留（用户可自由平移找回内容）
   await page.evaluate(() => {
     isDirty = false; clearTimeout(autosaveTimer); autosaveTimer = null;
     const s = defaultState();
@@ -415,7 +415,7 @@ await fresh();
   await page.reload();
   await page.waitForLoadState("networkidle");
   const v2 = await view();
-  expect(v2.panX <= 0 && v2.panY <= 0, `放大到超出视口时 pan 必须夹回 0 以下，实际 panX=${v2.panX} panY=${v2.panY}`);
+  expect(v2.panX === 5000 && v2.panY === 5000, `无限画布下 pan 应原样保留，实际 panX=${v2.panX} panY=${v2.panY}`);
   await fresh();
 }
 
@@ -430,11 +430,8 @@ await fresh();
   await page.locator('[data-action="zoom-reset"]').click();
   await page.waitForTimeout(80);
   const v = await view();
-  const size = await page.evaluate(() => ({ cw: viewport.clientWidth, ch: viewport.clientHeight }));
-  const loX = size.cw - 2400 * v.zoom, loY = size.ch - 1500 * v.zoom;
   expect(v.zoom === 1, `点 100% 后缩放应为 1，实际 ${v.zoom}`);
-  expect(v.panX >= Math.min(loX, 0) - 0.5 && v.panX <= Math.max(loX, 0) + 0.5, `100% 时 panX 应合法，实际 ${v.panX}`);
-  expect(v.panY >= Math.min(loY, 0) - 0.5 && v.panY <= Math.max(loY, 0) + 0.5, `100% 时 panY 应合法，实际 ${v.panY}`);
+  expect(Number.isFinite(v.panX) && Number.isFinite(v.panY), `无限画布下 pan 应保持有限数值，实际 panX=${v.panX} panY=${v.panY}`);
   await fresh();
 }
 
@@ -451,9 +448,7 @@ await fresh();
   await fresh();
 }
 
-// 【4-4 在画布矩形外点空白放节点，落点必须被夹回画布内】
-// 缩到 30% 后画布四周会露出同底色的空白，很容易误点；若只夹左上、不夹右下，
-// 节点会落到 x>2400 的画布外，而 clampPan 又把视图锁在画布内，节点就再也找不回来了。
+// 【4-4 无限画布：在视口空白处点放节点，节点落在世界坐标，不夹回旧 2400×1500 边界】
 {
   for (let i = 0; i < 20; i += 1) {
     const z = await page.evaluate(() => activeCanvas().view.zoom);
@@ -467,23 +462,22 @@ await fresh();
   const box = await vpBox();
   const before = (await nodes()).length;
   await page.locator('[data-tool="rect"]').click();
-  // 点视口右下角：此处已在画布矩形之外，换算出的世界坐标远大于 2400/1500
+  // 点视口右下角：换算出的世界坐标可以远超旧 2400/1500，而且不夹回
   await page.mouse.click(box.x + box.width - 8, box.y + box.height - 8);
   await page.waitForTimeout(120);
 
   const placed = await nodes();
   expect(placed.length === before + 1, `在空白处点击应新增 1 个节点，实际 ${placed.length - before} 个`);
-  const n = placed[placed.length - 1];
   const world = await page.evaluate(([x, y]) => ({ x: (x - activeCanvas().view.panX) / activeCanvas().view.zoom, y: (y - activeCanvas().view.panY) / activeCanvas().view.zoom }), [box.x + box.width - 8, box.y + box.height - 8]);
-  expect(world.x > 2400 && world.y > 1500, `预置条件：该点击点应落在画布右下之外，实际世界坐标 (${Math.round(world.x)}, ${Math.round(world.y)})`);
-  expect(n.x >= 10 && n.y >= 10, `节点左上不能越界，实际 (${n.x}, ${n.y})`);
-  expect(n.x + n.w <= 2400 && n.y + n.h <= 1500, `节点右下必须被夹回画布内（否则拖不回来），实际右下 (${n.x + n.w}, ${n.y + n.h})`);
+  expect(world.x > 2400 && world.y > 1500, `预置条件：该点击点应落在旧画布右下之外，实际世界坐标 (${Math.round(world.x)}, ${Math.round(world.y)})`);
+  const n = placed[placed.length - 1];
+  expect(n.x > 2400 && n.y > 1500, `无限画布下节点应能放到旧边界之外，实际 (${n.x}, ${n.y})`);
 
-  // 再验证「找得回来」：放大到 100% 后拖动画布，节点仍在画布内可被看见
+  // 再验证「找得回来」：放大到 100% 后平移画布，节点仍能在世界坐标看到
   await page.locator('[data-action="zoom-reset"]').click();
   await page.waitForTimeout(80);
   const after100 = (await nodes()).find((x) => x.id === n.id);
-  expect(after100.x + after100.w <= 2400 && after100.y + after100.h <= 1500, `100% 下节点仍须在画布内，实际右下 (${after100.x + after100.w}, ${after100.y + after100.h})`);
+  expect(after100.x > 2400 && after100.y > 1500, `100% 下节点仍应保留在旧边界之外，实际右下 (${after100.x}, ${after100.y})`);
   await fresh();
 }
 

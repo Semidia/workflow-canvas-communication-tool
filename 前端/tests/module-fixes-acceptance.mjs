@@ -73,7 +73,7 @@ await page.locator('[data-tool="select"]').click();
 }
 await placeFirst();
 const placed = (await nodes()).slice(-2);
-const outOfBounds = placed.filter((n) => n.x < 10 || n.y < 10 || n.x > 2400 - n.w || n.y > 1500 - n.h);
+const outOfBounds = placed.filter((n) => !Number.isFinite(n.x) || !Number.isFinite(n.y) || n.x < 10 || n.y < 10 || n.x > 100000 - n.w || n.y > 100000 - n.h);
 expect(outOfBounds.length === 0, `放置节点越界：${JSON.stringify(outOfBounds)}`);
 results.push("场景2 放置越界 clamp：通过");
 
@@ -159,6 +159,7 @@ expect(await activeId() === "canvas-main", `撤销后应停在当前画布 canva
 const restoredTab = page.locator(`.canvas-tab[data-canvas-id="${canvasBId}"]`);
 expect(await restoredTab.count() === 1, `撤销后标签栏应重新出现被关闭的画布 ${canvasBId}`);
 await restoredTab.click();
+await page.waitForTimeout(80);
 expect(await activeId() === canvasBId, `点击恢复出来的标签后应切到 ${canvasBId}`);
 expect((await nodes()).length === canvasBNodes, `撤销回来的画布内容应完整（${canvasBNodes} 个节点），实际 ${(await nodes()).length}`);
 results.push("场景6 关闭画布可撤销且内容完整：通过（B 线原断言「不可撤销」为待确认分歧）");
